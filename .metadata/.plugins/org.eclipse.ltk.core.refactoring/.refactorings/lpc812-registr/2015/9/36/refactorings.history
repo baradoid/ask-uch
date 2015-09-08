@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;lpc812-registr/src/lpc812-registr.cpp&apos; to &apos;main.cpp&apos;" description="Rename resource &apos;lpc812-registr.cpp&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/lpc812-registr.cpp" name="main.cpp" stamp="1441138868139" updateReferences="true"/>
-</session>
