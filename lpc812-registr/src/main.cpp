@@ -27,7 +27,7 @@ void prvSetupHardware();
 RINGBUFF_T rxring;
 /* Transmit and receive buffers */
 __NOINIT_DEF uint8_t rxbuff[UART_RB_SIZE];
-void processMsg(char *curStr, uint16_t wifiMsgLen);
+
 void vUartTask ();
 
 #define RINGBUF_FULL_BITNUM 0
@@ -80,7 +80,9 @@ void vUartTask ()
 			//tempRecvBufInd++;
 			//uint16_t tempRecvBufLen = sizeof(tempRecvBuf);
 			Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
-			processMsg(tempRecvBuf, tempRecvBufInd);
+			TCmdType cmdType = UNKNWON;
+			cmdType = parseCommand(tempRecvBuf);
+			processMsg(cmdType, tempRecvBuf, tempRecvBufInd);
 			tempRecvBufInd = 0 ;
 		}
 		else

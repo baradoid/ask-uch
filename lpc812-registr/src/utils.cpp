@@ -242,7 +242,7 @@ uint32_t prepareHtmlData()
 	//itoa(xTaskGetTickCount(), numToStr, 10);
 	//strcat (htmlBody,numToStr);
 
-	addToHtml(" f ");
+	addToHtml(" select WiFi AP ");
 
 	//itoa(xPortGetFreeHeapSize(), numToStr, 10);
 	//addToHtml(numToStr);
@@ -256,6 +256,12 @@ uint32_t prepareHtmlData()
 			addToHtml(wifiApList[i].name);
 			addToHtml( "> ");
 			addToHtml(wifiApList[i].name);
+
+			addToHtml( " (");
+			itoa(wifiApList[i].rssi, numToStr, 10);
+			addToHtml(numToStr);
+			addToHtml( ")");
+
 			addToHtml("<br>");
 			//	"<input name=\"mycolor\" type=\"radio\" value=\"white\"> white <br>"
 
@@ -305,22 +311,8 @@ typedef enum {
 	htmlClose
 } TProcState;
 
-typedef enum {
-	IPD,
-	CIFSR_APIP,
-	CIFSR_APMAC,
-	CIFSR_STAIP,
-	CIFSR_STAMAC,
-	CMD_OK,
-	CMD_CONNECT,
-	CMD_CLOSED,
-	TEXT,
-	SEND_OK,
-	SEND_READY,
-	UNKNWON
-} TCmdType;
 
-void parseIPD(char *str, uint8_t *curConnInd, uint16_t *msgLen)
+void parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 {
 	char *pch;
 	char numToStr[10];
@@ -336,9 +328,9 @@ void parseIPD(char *str, uint8_t *curConnInd, uint16_t *msgLen)
 			break;
 		case 2:
 			*msgLen = atoi(pch);
-			debugPrintf("msg length:");
-			debugPrintf(pch);
-			debugPrintf("\r\n");
+			//debugPrintf("msg length:");
+			//debugPrintf(pch);
+			//debugPrintf("\r\n");
 
 			//debugPrintf(pch);
 			//debugPrintf("\r\n");
@@ -402,13 +394,15 @@ void parseCWLAP(char *str)
 	uint8_t i;
 	char *pch;
 	static uint8_t wifiApInd = 0;
-	pch = strtok (str, ":(");
+	pch = strtok (str, ":(\"");
 	TWifiAp *carWifiAap = &(wifiApList[wifiApInd]);
 	for(i=0; pch != NULL; i++){
 
 		switch(i){
 		case 2:
-			strcpy(&(carWifiAap->name[0]), pch);
+			//pch[strlen(pch)]='\0';
+			memcpy(&(carWifiAap->name[0]), pch+1, strlen(pch)-2);
+			//strcpy(&(carWifiAap->name[0]), pch+1);
 			break;
 		case 3:
 			carWifiAap->rssi = atoi(pch);
@@ -421,29 +415,17 @@ void parseCWLAP(char *str)
 	wifiApInd++;
 }
 
-//void sendHtml(char *str);
+uint8_t curConnInd = 0;
+int16_t msgLength = 0;
 
-void processMsg(char *wifiMsg, uint16_t wifiMsgLen)
+TCmdType parseCommand(char *wifiMsg)
 {
-	static TProcState eState = init;
-	static uint8_t curConnInd = 0;
-
-	char numToStr[10];
-	static uint16_t msgLength = 0;
-
-	//char *curStr;
-	//uint8_t curStrLen;
-	//curStr = tempRecvBuf; //&(uartRecvBuf[curInd][0]);
-	//curStrLen = strlen(curStr);
-	//Chip_UART_SendBlocking(LPC_USART0, curStr, curStrLen);
-
 	TCmdType cmdType = UNKNWON;
 	if(wifiMsg[0] == '+'){
 		if(MEMCMPx(wifiMsg, "+IPD") == 0){
 			//debugPrintf("!!! +IPD !!! ");
 			parseIPD(wifiMsg, &curConnInd, &msgLength);
 			cmdType = IPD;
-			eState = processMsgRecv;
 		}
 		else if(MEMCMPx(wifiMsg, "+CIFSR") == 0){
 			cmdType = parseCIFSR(wifiMsg);
@@ -465,25 +447,56 @@ void processMsg(char *wifiMsg, uint16_t wifiMsgLen)
 		//debugPrintf("!!!CLOSED!!!\r\n");
 		cmdType = CMD_CLOSED;
 	}
-	else if(strcmp(wifiMsg, "SEND OK\r\n") == 0){
+	else if(strcmp(wifiMsg, "SEND OK\r\n") == 0)
 		cmdType = SEND_OK;
-	}
 	else if(strcmp(wifiMsg, "> \r\n") == 0){
 		debugPrintf("!!!SEND_READY!!!\r\n");
 		cmdType = SEND_READY;
 	}
+	else if(strcmp(wifiMsg, "WIFI GOT IP\r\n") == 0)
+		cmdType = wifi_gotip;
+	else if(strcmp(wifiMsg, "WIFI DISCONNECT\r\n") == 0)
+		cmdType = wifi_discon;
+	else if(strcmp(wifiMsg, "ready\r\n") == 0)
+		cmdType = ready;
 	else{
 		cmdType = TEXT;
 	}
+	return cmdType;
+}
 
+void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
+{
+	static TProcState eState = init;
+
+	char numToStr[10];
+
+	//char *curStr;
+	//uint8_t curStrLen;
+	//curStr = tempRecvBuf; //&(uartRecvBuf[curInd][0]);
+	//curStrLen = strlen(curStr);
+	//Chip_UART_SendBlocking(LPC_USART0, curStr, curStrLen);
+
+	if(cmdType == IPD)
+		eState = processMsgRecv;
 	/////
-
 	switch(eState){
 		case init:
-			if(strcmp(wifiMsg, "WIFI GOT IP\r\n") == 0){
-				wifiPrintf("ATE0\r\n");
+			switch(cmdType){
+				case ready:
+					//debugPrintf(" READY!!!!\r\n");
+					wifiPrintf("ATE0\r\n");
+					break;
+				case wifi_discon:
+					break;
+				case wifi_conn:
+					break;
+				case wifi_gotip:
+					break;
+				default:
+					break;
 			}
-			else if(cmdType == CMD_OK){
+			if(cmdType == CMD_OK){
 				wifiPrintf("AT+CIPMUX=1\r\n");
 				eState = cipserver;
 			}
@@ -541,7 +554,8 @@ void processMsg(char *wifiMsg, uint16_t wifiMsgLen)
 			}
 			break;
 		case waitForCmd:
-
+			if(cmdType == IPD)
+				eState = processMsgRecv;
 			break;
 		case processMsgRecv:
 			if(cmdType == TEXT){
@@ -565,15 +579,22 @@ void processMsg(char *wifiMsg, uint16_t wifiMsgLen)
 
 					eState = htmlSend0;
 				}
+				else if(msgLength < 0){
+					debugPrintf("ERROR RECV MSG!\r\n");
+					eState = htmlSend0;
+				}
 				else{
 					debugPrintf(" => ");
 					itoa(wifiMsgLen, numToStr, 10);
 					debugPrintf(numToStr);
-					debugPrintf(" => remain ");
+					debugPrintf(" rn ");
 					itoa(msgLength, numToStr, 10);
 					debugPrintf(numToStr);
-					debugPrintf(" chars \r\n");
+					debugPrintf(" chs\r\n");
 				}
+			}
+			else{
+				debugPrintf(" not TEXT type\r\n");
 			}
 			break;
 		case htmlSend0:
@@ -628,7 +649,9 @@ void processMsg(char *wifiMsg, uint16_t wifiMsgLen)
 			break;
 
 		case waitForCipSendOk: //wait for "AT+CIPSEND=0," OK
-
+			if(cmdType == CMD_OK){
+				eState = waitForCmd;
+			}
 			break;
 
 		case waitForSendOk: //wait for "AT+CIPCLOSE=0 OK

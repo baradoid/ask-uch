@@ -15,6 +15,26 @@ void uartPrintf(LPC_USART_T *pUART, const char *str);
 
 void vUartTask ();
 
+typedef enum {
+	ready,
+	wifi_discon,
+	wifi_conn,
+	wifi_gotip,
+	IPD,
+	CIFSR_APIP,
+	CIFSR_APMAC,
+	CIFSR_STAIP,
+	CIFSR_STAMAC,
+	CMD_OK,
+	CMD_CONNECT,
+	CMD_CLOSED,
+	TEXT,
+	SEND_OK,
+	SEND_READY,
+	UNKNWON
+} TCmdType;
 
+TCmdType parseCommand(char *wifiMsg);
+void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen);
 
 
