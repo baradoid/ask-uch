@@ -1,0 +1,51 @@
+22:58:50 **** Incremental Build of configuration Debug for project lpc812-registr ****
+make -r all 
+Building file: ../src/utils.cpp
+Invoking: MCU C++ Compiler
+arm-none-eabi-c++ -D__NEWLIB__ -DDEBUG -DCORE_M0PLUS -D__MTB_DISABLE -D__MTB_BUFFER_SIZE=256 -D__LPC8XX__ -I"C:\Users\Dmitry\Documents\LPCXpresso_7.8.0_426\askue\lpc812-workspace\lpc_chip_8xx\inc" -Os -g3 -Wall -c -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections -fno-rtti -fno-exceptions -mcpu=cortex-m0 -mthumb -MMD -MP -MF"src/utils.d" -MT"src/utils.o" -MT"src/utils.d" -o "src/utils.o" "../src/utils.cpp"
+../src/utils.cpp: In function 'uint32_t prepareHtmlData()':
+../src/utils.cpp:240:7: warning: unused variable 'numToStr' [-Wunused-variable]
+  char numToStr[10];
+       ^
+C:\Users\Dmitry\AppData\Local\Temp\ccL5FBB0.s: Assembler messages:
+C:\Users\Dmitry\AppData\Local\Temp\ccL5FBB0.s:1906: Warning: setting incorrect section attributes for .rodata.$text
+Finished building: ../src/utils.cpp
+ 
+Building target: lpc812-registr.axf
+Invoking: MCU C++ Linker
+arm-none-eabi-c++ -nostdlib -L"C:\Users\Dmitry\Documents\LPCXpresso_7.8.0_426\askue\lpc812-workspace\lpc_chip_8xx\Debug" -Xlinker -Map="lpc812-registr.map" -Xlinker --gc-sections -mcpu=cortex-m0 -mthumb -T "lpc812-registr_Debug.ld" -o "lpc812-registr.axf"  ./src/cr_cpp_config.o ./src/cr_startup_lpc8xx.o ./src/crp.o ./src/main.o ./src/mtb.o ./src/utils.o   -llpc_chip_8xx
+Finished building target: lpc812-registr.axf
+ 
+make --no-print-directory post-build
+Performing post-build steps
+arm-none-eabi-size "lpc812-registr.axf" ; arm-none-eabi-objcopy -O ihex lpc812-registr.axf lpc812-registr.hex ; # arm-none-eabi-objcopy -v -O binary "lpc812-registr.axf" "lpc812-registr.bin" ; # checksum -p LPC812 -d "lpc812-registr.bin" ; # arm-none-eabi-objcopy -v -O binary "lpc812-registr.axf" "lpc812-registr.bin" ; # checksum -p LPC812 -d "lpc812-registr.bin"
+   text	   data	    bss	    dec	    hex	filename
+   8920	   1076	   3016	  13012	   32d4	lpc812-registr.axf
+ 
+23:04:58 **** Incremental Build of configuration Debug for project lpc812-registr ****
+make -r all 
+Building file: ../src/utils.cpp
+Invoking: MCU C++ Compiler
+arm-none-eabi-c++ -D__NEWLIB__ -DDEBUG -DCORE_M0PLUS -D__MTB_DISABLE -D__MTB_BUFFER_SIZE=256 -D__LPC8XX__ -I"C:\Users\Dmitry\Documents\LPCXpresso_7.8.0_426\askue\lpc812-workspace\lpc_chip_8xx\inc" -Os -g3 -Wall -c -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections -fno-rtti -fno-exceptions -mcpu=cortex-m0 -mthumb -MMD -MP -MF"src/utils.d" -MT"src/utils.o" -MT"src/utils.d" -o "src/utils.o" "../src/utils.cpp"
+../src/utils.cpp: In function 'uint32_t prepareHtmlData()':
+../src/utils.cpp:240:7: warning: unused variable 'numToStr' [-Wunused-variable]
+  char numToStr[10];
+       ^
+C:\Users\Dmitry\AppData\Local\Temp\ccmQakWb.s: Assembler messages:
+C:\Users\Dmitry\AppData\Local\Temp\ccmQakWb.s:1878: Warning: setting incorrect section attributes for .rodata.$text
+Finished building: ../src/utils.cpp
+ 
+Building target: lpc812-registr.axf
+Invoking: MCU C++ Linker
+arm-none-eabi-c++ -nostdlib -L"C:\Users\Dmitry\Documents\LPCXpresso_7.8.0_426\askue\lpc812-workspace\lpc_chip_8xx\Debug" -Xlinker -Map="lpc812-registr.map" -Xlinker --gc-sections -mcpu=cortex-m0 -mthumb -T "lpc812-registr_Debug.ld" -o "lpc812-registr.axf"  ./src/cr_cpp_config.o ./src/cr_startup_lpc8xx.o ./src/crp.o ./src/main.o ./src/mtb.o ./src/utils.o   -llpc_chip_8xx
+Finished building target: lpc812-registr.axf
+ 
+make --no-print-directory post-build
+Performing post-build steps
+arm-none-eabi-size "lpc812-registr.axf" ; arm-none-eabi-objcopy -O ihex lpc812-registr.axf lpc812-registr.hex ; # arm-none-eabi-objcopy -v -O binary "lpc812-registr.axf" "lpc812-registr.bin" ; # checksum -p LPC812 -d "lpc812-registr.bin" ; # arm-none-eabi-objcopy -v -O binary "lpc812-registr.axf" "lpc812-registr.bin" ; # checksum -p LPC812 -d "lpc812-registr.bin"
+   text	   data	    bss	    dec	    hex	filename
+   8872	   1076	   3016	  12964	   32a4	lpc812-registr.axf
+ 
+23:05:17 **** Incremental Build of configuration Debug for project lpc_chip_8xx ****
+make -r all 
+make: Nothing to be done for `all'.

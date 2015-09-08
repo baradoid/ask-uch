@@ -1,0 +1,21 @@
+/*
+ * utils.h
+ *
+ *  Created on: 01 сент. 2015 г.
+ *      Author: Dmitry
+ */
+
+#ifndef UTILS_H_
+#define UTILS_H_
+
+#include "chip.h"
+
+
+void uartPrintf(LPC_USART_T *pUART, const char *str);
+
+#define debugPrintf(b) uartPrintf(LPC_USART0, b)
+#define wifiPrintf(b) uartPrintf(LPC_USART1, b)
+
+#define ASSERT(x) if((x) == 0){debugPrintf("ASSERTION!!\r\n");}
+
+#endif /* UTILS_H_ */

@@ -1,0 +1,4 @@
+//org.eclipse.ui.commands/state/com.crt.dsfswv.TraceViews/org.eclipse.ui.commands.toggleState=true
+//org.eclipse.ui.commands/state/com.nxp.current.setProbeType/org.eclipse.ui.commands.radioState=nopower
+RUN_IN_BACKGROUND=true
+eclipse.preferences.version=1

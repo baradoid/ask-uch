@@ -1,0 +1,38 @@
+/*
+===============================================================================
+ Name        : main.c
+ Author      : $(author)
+ Version     :
+ Copyright   : $(copyright)
+ Description : main definition
+===============================================================================
+*/
+
+#ifdef __USE_CMSIS
+#include "LPC8xx.h"
+#endif
+
+
+//#include "chip.h"
+
+#include <cr_section_macros.h>
+
+
+
+void prvSetupHardware(void);
+
+int main(void)
+{
+	prvSetupHardware();
+	char str[100];
+	sptrinf(str, "lalal %d", 10);
+
+
+    // Force the counter to be placed into memory
+    volatile static int i = 0 ;
+    // Enter an infinite loop, just incrementing a counter
+    while(1) {
+        i++ ;
+    }
+    return 0 ;
+}
