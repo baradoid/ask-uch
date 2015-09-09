@@ -297,25 +297,67 @@ typedef enum {
 	checkIp,
 	checkForNetworks,
 	checkForNetworksList,
+	checkTO,
 	waitForCmd,
 	processMsgRecv,
 	waitForCipSendOk,
 	waitForSendOk,
 	waitForCloseOk,
+	htmlSendTest0,
 	htmlSend0,
 	htmlSend1,
 	htmlSend2,
 	htmlSend3,
 	htmlSend4,
 	htmlSend5,
+
 	htmlClose
 } TProcState;
 
+typedef enum{
+	GET_ROOT,
+	GET_FAVICON,
+	POST
+} THtmlReqType;
+
+THtmlReqType htmlReqType;
+
+void parseHttpReq(char *str)
+{
+	char *pch;
+	uint8_t argInd = 0;
+	//debugPrintf(" ! parse http req ! start\r\n");
+	//debugPrintf(str);
+	//debugPrintf("\r\n");
+
+	pch = strtok (str, " ");
+	while(pch != NULL){
+		//debugPrintf(pch);
+		//debugPrintf("\r\n");
+
+		if(argInd == 1){
+			if(strcmp(pch, "/") == 0){
+				//debugPrintf(" GET_ROOT detected\r\n");
+				htmlReqType = GET_ROOT;
+			}
+			else if(strcmp(pch, "/favicon.ico") == 0){
+				//debugPrintf(" GET_FAVICON detected\r\n");
+				htmlReqType = GET_FAVICON;
+			}
+		}
+
+		pch = strtok (NULL, " ");
+		argInd++;
+	}
+
+	//debugPrintf(" ! parse http req ! stop\r\n");
+}
 
 void parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 {
 	char *pch;
 	char numToStr[10];
+	char *strHttpReq = NULL;
 	uint8_t i;
 
 	uint16_t tailLen = 0;
@@ -337,18 +379,20 @@ void parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 			break;
 		case 3:
 			tailLen = strlen(pch);
+			strHttpReq = pch;
 			//itoa(strlen(pch), tailLen, 10);
 			//atoi(pch);
-
 			//debugPrintf(pch);
 			//debugPrintf(" => ");
-			//debugPrintf(numToStr);
+			///debugPrintf(numToStr);
 			//debugPrintf("\r\n");
 
 			break;
 		}
 		pch = strtok (NULL, ",:");
 	}
+	parseHttpReq(strHttpReq);
+
 	debugPrintf("conNum ");
 	itoa(*curConnInd, numToStr, 10);
 	debugPrintf(numToStr);
@@ -418,9 +462,9 @@ void parseCWLAP(char *str)
 uint8_t curConnInd = 0;
 int16_t msgLength = 0;
 
-TCmdType parseCommand(char *wifiMsg)
+void parseCommand(TCmdType &cmdType, char *wifiMsg)
 {
-	TCmdType cmdType = UNKNWON;
+	cmdType = UNKNWON;
 	if(wifiMsg[0] == '+'){
 		if(MEMCMPx(wifiMsg, "+IPD") == 0){
 			//debugPrintf("!!! +IPD !!! ");
@@ -437,6 +481,10 @@ TCmdType parseCommand(char *wifiMsg)
 	else if(strlen(wifiMsg)==4){
 		if(strcmp(wifiMsg, "OK\r\n") == 0)
 			cmdType = CMD_OK;
+	}
+	else if(strlen(wifiMsg)==11){
+		if(strcmp(wifiMsg, "busy s...\r\n") == 0)
+			cmdType = busy_s;
 	}
 	else if(strcmp(wifiMsg+1, ",CONNECT\r\n") == 0){
 		//debugPrintf("!!!CONNECT!!!\r\n");
@@ -459,13 +507,22 @@ TCmdType parseCommand(char *wifiMsg)
 		cmdType = wifi_discon;
 	else if(strcmp(wifiMsg, "ready\r\n") == 0)
 		cmdType = ready;
+	else if(strcmp(wifiMsg, "> ") == 0){
+		cmdType = ready_to_send;
+		//debugPrintf("!!! ready_to_send detected !!!\r\n");
+	}
+	else if(MEMCMPx(wifiMsg, "Recv") == 0){
+		cmdType = recv_bytes_report;
+		//debugPrintf("!!! recv_bytes_report detected !!!\r\n");
+	}
 	else{
 		cmdType = TEXT;
+		if((msgLength == 0) && (strcmp(wifiMsg, "\r\n") != 0) )
+			debugPrintf("!!! unknown cmd!!! \r\n");
 	}
-	return cmdType;
 }
 
-void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
+void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 {
 	static TProcState eState = init;
 
@@ -477,8 +534,12 @@ void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
 	//curStrLen = strlen(curStr);
 	//Chip_UART_SendBlocking(LPC_USART0, curStr, curStrLen);
 
-	if(cmdType == IPD)
-		eState = processMsgRecv;
+//	if(cmdType == IPD)
+//		eState = processMsgRecv;
+	if(cmdType == CMD_CLOSED){
+		debugPrintf("!!! detected connection closed !!!\r\n");
+		eState = waitForCmd;
+	}
 	/////
 	switch(eState){
 		case init:
@@ -505,21 +566,26 @@ void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
 			switch(cmdType){
 				case CMD_OK:
 					wifiPrintf("AT+CIPSERVER=1,80\r\n");
-					eState = checkIp;
+					eState = checkTO;
 					break;
 				default:
 					break;
 			}
 			break;
+		case checkTO:
+				if(cmdType == CMD_OK){
+					wifiPrintf("AT+CIPSTO?\r\n");
+					eState = checkIp;
+				}
 		case checkIp:
 			switch(cmdType){
 				case CMD_OK:
 					wifiPrintf("AT+CIFSR\r\n");
+					eState = checkForNetworks;
 					break;
 				case CIFSR_STAMAC:
 					//debugPrintf(APIP);
 					//debugPrintf(STAPIP);
-					eState = checkForNetworks;
 					break;
 				default:
 					break;
@@ -559,50 +625,126 @@ void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
 			break;
 		case processMsgRecv:
 			if(cmdType == TEXT){
-				msgLength -= wifiMsgLen;
+				if(msgLength > 0){
+					msgLength -= wifiMsgLen;
 
-				if(msgLength == 0){
-					debugPrintf(" message recvd! \r\n");
+					if(msgLength == 0){
+						debugPrintf(" message recvd! \r\n");
 
-					wifiPrintf("AT+CIPSEND=");
-					//debugPrintf("AT+CIPSEND=");
-					itoa(curConnInd, numToStr, 10);
-					wifiPrintf(numToStr);
-					//debugPrintf(numToStr);
-					wifiPrintf(",");
-					//debugPrintf(",");
-					itoa(strlen(&(htmlPart1[0])), numToStr, 10);
-					wifiPrintf(numToStr);
-					//debugPrintf(numToStr);
-					wifiPrintf("\r\n");
-					//debugPrintf("\r\n");
 
-					eState = htmlSend0;
-				}
-				else if(msgLength < 0){
-					debugPrintf("ERROR RECV MSG!\r\n");
-					eState = htmlSend0;
-				}
-				else{
-					debugPrintf(" => ");
-					itoa(wifiMsgLen, numToStr, 10);
-					debugPrintf(numToStr);
-					debugPrintf(" rn ");
-					itoa(msgLength, numToStr, 10);
-					debugPrintf(numToStr);
-					debugPrintf(" chs\r\n");
+						/*wifiPrintf("AT+CIPSEND=");
+						debugPrintf("AT+CIPSEND=");
+						itoa(curConnInd, numToStr, 10);
+						wifiPrintf(numToStr);
+						debugPrintf(numToStr);
+						wifiPrintf(",");
+						debugPrintf(",");
+						itoa(strlen(&(htmlPart1[0])), numToStr, 10);
+						wifiPrintf(numToStr);
+						debugPrintf(numToStr);
+						wifiPrintf("\r\n");
+						debugPrintf("\r\n");*/
+
+						//if(0){
+							if(htmlReqType == GET_ROOT){
+								debugPrintf("send ROOT\r\n");
+								wifiPrintf("AT+CIPSEND=");
+								debugPrintf("AT+CIPSEND=");
+								itoa(curConnInd, numToStr, 10);
+								wifiPrintf(numToStr);
+								debugPrintf(numToStr);
+								wifiPrintf(",");
+								debugPrintf(",");
+								itoa(strlen(&(htmlPart1[0])), numToStr, 10);
+								wifiPrintf(numToStr);
+								debugPrintf(numToStr);
+								wifiPrintf("\r\n");
+								debugPrintf("\r\n");
+
+								//wifiPrintf("AT+CIPSEND=?\r\n");
+								//debugPrintf("AT+CIPSEND=?\r\n");
+
+								eState = htmlSend0;
+							}
+							else {
+								debugPrintf("nothing send. not ROOT\r\n");
+								wifiPrintf("AT+CIPCLOSE=");
+								itoa(curConnInd, numToStr, 10);
+								wifiPrintf(numToStr);
+								wifiPrintf("\r\n");
+								eState = waitForSendOk;
+							}
+						//}
+					}
+					else if(msgLength < 0){
+						debugPrintf("ERROR RECV MSG!\r\n");
+						eState = htmlSend0;
+					}
+					else{
+						/*debugPrintf(" => ");
+						itoa(wifiMsgLen, numToStr, 10);
+						debugPrintf(numToStr);
+						debugPrintf(" rn ");
+						itoa(msgLength, numToStr, 10);
+						debugPrintf(numToStr);
+						debugPrintf(" chs\r\n");*/
+					}
 				}
 			}
 			else{
 				debugPrintf(" not TEXT type\r\n");
 			}
 			break;
-		case htmlSend0:
+
+		case htmlSendTest0:
 			if(cmdType == CMD_OK){
-				//wifiPrintf(&(htmlPart1[0]));
-				wifiPrintf(&(htmlPart1[0]));
+				debugPrintf("!!! htmlSendTest0 CMD_OK detected!!!\r\n");
+				wifiPrintf("AT+CIPSEND=");
+				debugPrintf("AT+CIPSEND=");
+				itoa(curConnInd, numToStr, 10);
+				wifiPrintf(numToStr);
+				debugPrintf(numToStr);
+				wifiPrintf(",");
+				debugPrintf(",");
+				itoa(strlen(&(htmlPart1[0])), numToStr, 10);
+				wifiPrintf(numToStr);
+				debugPrintf(numToStr);
+				wifiPrintf("\r\n");
+				debugPrintf("\r\n");
+				eState = htmlSend0;
+			}
+			else if(cmdType == busy_s){
+				debugPrintf("!!! htmlSendTest0 busy_s detected!!!\r\n");
+				wifiPrintf("AT+CIPCLOSE=");
+				itoa(curConnInd, numToStr, 10);
+				wifiPrintf(numToStr);
+				wifiPrintf("\r\n");
+				eState = waitForSendOk;
+				//wifiPrintf("AT+CIPSEND=?\r\n");
+				//debugPrintf("AT+CIPSEND=?\r\n");
 			}
 			else if(cmdType == SEND_OK){
+				debugPrintf("!!! htmlSendTest0 SEND_OK detected!!!\r\n");
+			}
+			break;
+
+		case htmlSend0:
+			if(cmdType == CMD_OK){
+				debugPrintf("!!! htmlSend0 OK detected!!!\r\n");
+				//wifiPrintf(&(htmlPart1[0]));
+
+			}
+			else if(cmdType == ready_to_send){
+				debugPrintf("!!! htmlSend0 ready_to_send detected!!!\r\n");
+				wifiPrintf(&(htmlPart1[0]));
+			}
+			else if(cmdType == busy_s){
+				debugPrintf("!!! busy detected!!!\r\n");
+
+
+			}
+			else if(cmdType == SEND_OK){
+				debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
 				prepareHtmlData();
 				wifiPrintf("AT+CIPSEND=");
 				itoa(curConnInd, numToStr, 10);
@@ -617,9 +759,14 @@ void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
 
 		case htmlSend1:
 			if(cmdType == CMD_OK){
+				debugPrintf("!!! htmlSend1 CMD_OK detected!!!\r\n");
+			}
+			else if(cmdType == ready_to_send){
+				debugPrintf("!!! htmlSend1 ready_to_send detected!!!\r\n");
 				wifiPrintf(&(htmlBody[0]));
 			}
 			else if(cmdType == SEND_OK){
+				debugPrintf("!!! htmlSend1 SEND_OK detected!!!\r\n");
 				wifiPrintf("AT+CIPSEND=");
 				itoa(curConnInd, numToStr, 10);
 				wifiPrintf(numToStr);
@@ -632,6 +779,11 @@ void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
 			break;
 		case htmlSend2:
 			if(cmdType == CMD_OK){
+				debugPrintf("!!! htmlSend2 CMD_OK detected!!!\r\n");
+
+			}
+			else if(cmdType == ready_to_send){
+				debugPrintf("!!! htmlSend2 ready_to_send detected!!!\r\n");
 				wifiPrintf(&(htmlPart2[0]));
 				eState = htmlClose;
 			}
@@ -640,6 +792,7 @@ void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
 			break;
 		case htmlClose:
 			if(cmdType == SEND_OK){
+				debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
 				wifiPrintf("AT+CIPCLOSE=");
 				itoa(curConnInd, numToStr, 10);
 				wifiPrintf(numToStr);

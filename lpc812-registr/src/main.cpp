@@ -65,13 +65,17 @@ int main(void)
 }
 
 #define TEMPRECVBUF_SIZE 256
+extern int16_t msgLength;
 void vUartTask ()
 {
 	static char tempRecvBuf[TEMPRECVBUF_SIZE];
 	static uint8_t tempRecvBufInd = 0;
 
 	while(RingBuffer_Pop(&rxring, &(tempRecvBuf[tempRecvBufInd]))){
-		if(tempRecvBuf[tempRecvBufInd] == '\n'){
+		if( (tempRecvBuf[tempRecvBufInd] == '\n') ||
+			((tempRecvBuf[0] == '>') && (tempRecvBufInd==1))
+		  )
+		{
 			tempRecvBufInd++;
 			tempRecvBuf[tempRecvBufInd] = '\0';
 
@@ -81,12 +85,23 @@ void vUartTask ()
 			//uint16_t tempRecvBufLen = sizeof(tempRecvBuf);
 			Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
 			TCmdType cmdType = UNKNWON;
-			cmdType = parseCommand(tempRecvBuf);
-			processMsg(cmdType, tempRecvBuf, tempRecvBufInd);
+			parseCommand(cmdType, tempRecvBuf);
+			processMsg(cmdType, tempRecvBufInd);
 			tempRecvBufInd = 0 ;
 		}
-		else
-			tempRecvBufInd++;
+		else{
+			if((msgLength > 0) && (tempRecvBufInd == (msgLength-1))){
+				tempRecvBufInd++;
+				tempRecvBuf[tempRecvBufInd] = '\0';
+				debugPrintf("!!! affected !!! \r\n");
+				Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+				TCmdType cmdType = TEXT;
+				processMsg(cmdType, tempRecvBufInd);
+				tempRecvBufInd = 0 ;
+			}
+			else
+				tempRecvBufInd++;
+		}
 	}
 }
 
