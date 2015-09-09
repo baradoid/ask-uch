@@ -6,4 +6,5 @@
 
 *.map
 *.hex
+*.mk
 /.metadata
