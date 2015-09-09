@@ -1,30 +1,28 @@
 /*
  * GENERATED FILE - DO NOT EDIT
- * (c) Code Red Technologies Ltd, 2008-13
+ * (c) Code Red Technologies Ltd, 2008-2013
  * (c) NXP Semiconductors 2013-2015
  * Generated linker script file for LPC812
- * Created from generic_cpp.ld (7.8.0 ())
- * By LPCXpresso v7.8.0 [Build 426] [2015-05-28]  on Mon Sep 07 23:04:39 MSK 2015
+ * Created from linkscript.ldt by FMCreateLinkLibraries
+ * Using Freemarker v2.3.23
+ * LPCXpresso v7.9.0 [Build 455] [2015-07-23]  on 08.09.2015 16:38:06
  */
 
-
-INCLUDE "lpc812-registr_Debug_lib.ld"
-INCLUDE "lpc812-registr_Debug_mem.ld"
+INCLUDE "lpc812-registr_Debug_library.ld"
+INCLUDE "lpc812-registr_Debug_memory.ld"
 
 ENTRY(ResetISR)
 
 SECTIONS
 {
-
-    /* MAIN TEXT SECTION */    
+    /* MAIN TEXT SECTION */
     .text : ALIGN(4)
     {
         FILL(0xff)
         __vectors_start__ = ABSOLUTE(.) ;
         KEEP(*(.isr_vector))
-        
         /* Global Section Table */
-        . = ALIGN(4) ;
+        . = ALIGN(4) ; 
         __section_table_start = .;
         __data_section_table = .;
         LONG(LOADADDR(.data));
@@ -36,99 +34,89 @@ SECTIONS
         LONG(  SIZEOF(.bss));
         __bss_section_table_end = .;
         __section_table_end = . ;
-        /* End of Global Section Table */
-        
+	    /* End of Global Section Table */
 
         *(.after_vectors*)
-        
+
     } >MFlash16
-    
+
     .text : ALIGN(4)    
     {
-         *(.text*)
+        *(.text*)
         *(.rodata .rodata.* .constdata .constdata.*)
         . = ALIGN(4);
-        
-        /* C++ constructors etc */
-        . = ALIGN(4);
-        KEEP(*(.init))
-        
-        . = ALIGN(4);
-        __preinit_array_start = .;
-        KEEP (*(.preinit_array))
-        __preinit_array_end = .;
-        
-        . = ALIGN(4);
-        __init_array_start = .;
-        KEEP (*(SORT(.init_array.*)))
-        KEEP (*(.init_array))
-        __init_array_end = .;
-        
-        KEEP(*(.fini));
-        
-        . = ALIGN(4);
-        KEEP (*crtbegin.o(.ctors))
-        KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
-        KEEP (*(SORT(.ctors.*)))
-        KEEP (*crtend.o(.ctors))
-        
-        . = ALIGN(4);
-        KEEP (*crtbegin.o(.dtors))
-        KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
-        KEEP (*(SORT(.dtors.*)))
-        KEEP (*crtend.o(.dtors))
-        . = ALIGN(4);
-        /* End C++ */
+			/* C++ constructors etc */
+			. = ALIGN(4);
+			KEEP(*(.init))
+			
+			. = ALIGN(4);
+			__preinit_array_start = .;
+			KEEP (*(.preinit_array))
+			__preinit_array_end = .;
+			
+			. = ALIGN(4);
+			__init_array_start = .;
+			KEEP (*(SORT(.init_array.*)))
+			KEEP (*(.init_array))
+			__init_array_end = .;
+			
+			KEEP(*(.fini));
+			
+			. = ALIGN(4);
+			KEEP (*crtbegin.o(.ctors))
+			KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+			KEEP (*(SORT(.ctors.*)))
+			KEEP (*crtend.o(.ctors))
+			
+			. = ALIGN(4);
+			KEEP (*crtbegin.o(.dtors))
+			KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+			KEEP (*(SORT(.dtors.*)))
+			KEEP (*crtend.o(.dtors))
+			. = ALIGN(4);
+			/* End C++ */
     } > MFlash16
-
     /*
      * for exception handling/unwind - some Newlib functions (in common
      * with C++ and STDC++) use this. 
      */
-    .ARM.extab : ALIGN(4)
+    .ARM.extab : ALIGN(4) 
     {
-    	*(.ARM.extab* .gnu.linkonce.armextab.*)
+        *(.ARM.extab* .gnu.linkonce.armextab.*)
     } > MFlash16
     __exidx_start = .;
-    
+
     .ARM.exidx : ALIGN(4)
     {
-    	*(.ARM.exidx* .gnu.linkonce.armexidx.*)
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
     } > MFlash16
     __exidx_end = .;
-    
+
     _etext = .;
         
-    
     /* MAIN DATA SECTION */
-    
-    /* Default MTB section */
-    .mtb_buffer_default (NOLOAD) :
-    {
-       KEEP(*(.mtb*))
-    } > RamLoc4 
-
+        /* Default MTB section */
+        .mtb_buffer_default (NOLOAD) :
+        {
+           KEEP(*(.mtb*))
+        } > RamLoc4
     .uninit_RESERVED : ALIGN(4)
     {
         KEEP(*(.bss.$RESERVED*))
         . = ALIGN(4) ;
         _end_uninit_RESERVED = .;
     } > RamLoc4
-
-	
-	/* Main DATA section (RamLoc4) */
-	.data : ALIGN(4)
-	{
-	   FILL(0xff)
-	   _data = . ;
-	   *(vtable)
-	   *(.ramfunc*)
-	   *(.data*)
-	   . = ALIGN(4) ;
-	   _edata = . ;
-	} > RamLoc4 AT>MFlash16
-
-
+    /* Main DATA section (RamLoc4) */
+    .data : ALIGN(4)
+    {
+       FILL(0xff)
+       _data = . ;
+       *(vtable)
+       *(.ramfunc*)
+       *(.data*)
+       . = ALIGN(4) ;
+       _edata = . ;
+    } > RamLoc4 AT>MFlash16
     /* MAIN BSS SECTION */
     .bss : ALIGN(4)
     {
@@ -139,8 +127,6 @@ SECTIONS
         _ebss = .;
         PROVIDE(end = .);
     } > RamLoc4
-        
-    
     /* DEFAULT NOINIT SECTION */
     .noinit (NOLOAD): ALIGN(4)
     {
@@ -149,7 +135,16 @@ SECTIONS
          . = ALIGN(4) ;
         _end_noinit = .;
     } > RamLoc4
-    
+
     PROVIDE(_pvHeapStart = DEFINED(__user_heap_base) ? __user_heap_base : .);
     PROVIDE(_vStackTop = DEFINED(__user_stack_top) ? __user_stack_top : __top_RamLoc4 - 0);
+
+    /* ## Create checksum value (used in startup) ## */
+    PROVIDE(__valid_user_code_checksum = 0 - 
+                                         (_vStackTop 
+                                         + (ResetISR + 1) 
+                                         + (( DEFINED(NMI_Handler) ? NMI_Handler : M0_NMI_Handler ) + 1) 
+                                         + (( DEFINED(HardFault_Handler) ? HardFault_Handler : M0_HardFault_Handler ) + 1) 
+                                         )
+           );
 }
