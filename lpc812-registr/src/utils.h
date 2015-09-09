@@ -31,10 +31,13 @@ typedef enum {
 	TEXT,
 	SEND_OK,
 	SEND_READY,
+	busy_s,
+	ready_to_send,
+	recv_bytes_report,
 	UNKNWON
 } TCmdType;
 
-TCmdType parseCommand(char *wifiMsg);
+void parseCommand(TCmdType &cmdType, char *wifiMsg);
 void processMsg(TCmdType cmdType, uint16_t wifiMsgLen);
 
 
