@@ -82,7 +82,7 @@ void vUartTask ()
 			Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
 			TCmdType cmdType = UNKNWON;
 			cmdType = parseCommand(tempRecvBuf);
-			processMsg(cmdType, tempRecvBuf, tempRecvBufInd);
+			processMsg(cmdType, tempRecvBufInd);
 			tempRecvBufInd = 0 ;
 		}
 		else

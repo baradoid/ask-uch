@@ -465,7 +465,7 @@ TCmdType parseCommand(char *wifiMsg)
 	return cmdType;
 }
 
-void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen)
+void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 {
 	static TProcState eState = init;
 

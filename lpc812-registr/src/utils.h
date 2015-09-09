@@ -35,6 +35,6 @@ typedef enum {
 } TCmdType;
 
 TCmdType parseCommand(char *wifiMsg);
-void processMsg(TCmdType cmdType, char *wifiMsg, uint16_t wifiMsgLen);
+void processMsg(TCmdType cmdType, uint16_t wifiMsgLen);
 
 
