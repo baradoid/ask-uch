@@ -66,9 +66,11 @@ int main(void)
 
 #define TEMPRECVBUF_SIZE 256
 extern int16_t msgLength;
+
+char tempRecvBuf[TEMPRECVBUF_SIZE];
+
 void vUartTask ()
 {
-	static char tempRecvBuf[TEMPRECVBUF_SIZE];
 	static uint8_t tempRecvBufInd = 0;
 
 	while(RingBuffer_Pop(&rxring, &(tempRecvBuf[tempRecvBufInd]))){
@@ -115,4 +117,9 @@ extern "C" void UART1_IRQHandler( void )
 			errword |= (1<<RINGBUF_FULL_BITNUM);
 
 	}
+}
+
+extern "C" void SysTick_Handler(void)
+{
+	debugPrintf("!!! affected !!! \r\n");
 }
