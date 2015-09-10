@@ -42,14 +42,9 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg);
 void processMsg(TCmdType cmdType, uint16_t wifiMsgLen);
 
 
-static __INLINE uint32_t SysTick_Config(uint32_t ticks)
-{
-  if (ticks > SYSTICK_MAXCOUNT)  return (1);                                             /* Reload value impossible */
-
-  SysTick->LOAD  =  (ticks & SYSTICK_MAXCOUNT) - 1;                                      /* set reload register */
-  NVIC_SetPriority (SysTick_IRQn, (1<<__NVIC_PRIO_BITS) - 1);                            /* set Priority for Cortex-M0 System Interrupts */
-  SysTick->VAL   =  (0x00);                                                              /* Load the SysTick Counter Value */
-  SysTick->CTRL = (1 << SYSTICK_CLKSOURCE) | (1<<SYSTICK_ENABLE) | (1<<SYSTICK_TICKINT); /* Enable SysTick IRQ and SysTick Timer */
-  return (0);                                                                            /* Function successful */
-}
-
+/* SysTick constants */
+//#define SYSTICK_ENABLE              0                                          /* Config-Bit to start or stop the SysTick Timer                         */
+//#define SYSTICK_TICKINT             1                                          /* Config-Bit to enable or disable the SysTick interrupt                 */
+//#define SYSTICK_CLKSOURCE           2                                          /* Clocksource has the offset 2 in SysTick Control and Status Register   */
+//#define SYSTICK_MAXCOUNT       ((1<<24) -1)                                    /* SysTick MaxCount */
+//uint32_t SysTick_Config(uint32_t ticks);

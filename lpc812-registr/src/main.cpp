@@ -20,6 +20,9 @@
 #include <stdint.h>
 
 
+#define SysTick_VALUE (SystemCoreClock/1000 - 1)
+
+
 void prvSetupHardware();
 
 #define UART_RB_SIZE 1024
@@ -37,6 +40,7 @@ uint8_t errword;
 int main(void)
 {
 	prvSetupHardware();
+	//SysTick_Config(SysTick_VALUE);
 
 	/* Before using the ring buffers, initialize them using the ring
 	   buffer init function */
@@ -119,7 +123,19 @@ extern "C" void UART1_IRQHandler( void )
 	}
 }
 
+//uint32_t secondsCount = 0;
+//uint32_t minutsCount = 0;
+uint32_t systickCount = 0;
 extern "C" void SysTick_Handler(void)
 {
-	debugPrintf("!!! affected !!! \r\n");
+	systickCount++;
+	if(systickCount > 1000){
+		systickCount = 0;
+		debugPrintf("sec \r\n");
+		//if(secondsCount++ >=59){
+			//secondsCount = 0;
+			//minutsCount++;
+			//debugPrintf("min \r\n");
+		//}
+	}
 }
