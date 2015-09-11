@@ -20,7 +20,7 @@ const uint32_t ExtRateIn = 0;
 __NOINIT_DEF char htmlBody[htmlBodyLen];
 
 __RODATA(text) char htmlSimple[] = "HTTP/1.1 200 OK\r\n"
-		"Date: Wed, 11 Feb 2009 11:20:59\r\n\r\n"
+		"Content-Type: text/html;\r\n\r\n"
 		"<html> <head><title>AIIS ASKUE</title></head><body>simple html</body></html>\0";
 
 __RODATA(text) char html404[] = "HTTP/1.1 404 Not Found\r\n";
@@ -71,10 +71,10 @@ __RODATA(text) char htmlPart2[] =
 typedef struct {
 	uint8_t secureType;
 	int8_t	rssi;
-	char name[40];
+	char name[35];
 } TWifiAp;
 
-#define WIFI_APLISTMAX 15
+#define WIFI_APLISTMAX 5
 TWifiAp wifiApList[WIFI_APLISTMAX];
 
 char APIP[20], STAPIP[20];
@@ -487,9 +487,6 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 		else if(MEMCMPx(wifiMsg, "+CWLAP") == 0){
 			parseCWLAP(wifiMsg);
 		}
-		else if(MEMCMPx(wifiMsg, "+CWLAP") == 0){
-			parseCWLAP(wifiMsg);
-		}
 		else if(MEMCMPx(wifiMsg, "+CIPSTO") == 0)
 			cmdType = CIPSTO;
 	}
@@ -532,8 +529,8 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 	}
 	else{
 		cmdType = TEXT;
-		if((msgLength == 0) && (strcmp(wifiMsg, "\r\n") != 0) )
-			debugPrintf("!!! unknown cmd!!! \r\n");
+//		if((msgLength == 0) && (strcmp(wifiMsg, "\r\n") != 0) )
+//			debugPrintf("!!! unknown cmd!!! \r\n");
 	}
 }
 
@@ -580,9 +577,52 @@ TCmdType blockWaitCmd()
 	}
 }
 
+void waitForRespOK()
+{
+	while(1){
+		TCmdType cmd = blockWaitCmd();
+		if( cmd == CMD_OK){
+			break;
+		}
+	}
+}
+void commonInit()
+{
+	wifiPrintf("AT+CIPMUX=1\r\n");
+	waitForRespOK();
+
+	wifiPrintf("AT+CIPSERVER=1,80\r\n");
+	waitForRespOK();
+
+	wifiPrintf("AT+CIFSR\r\n");
+	waitForRespOK();
+
+	wifiPrintf("AT+CWLAP\r\n");
+	waitForRespOK();
+
+	char numToStr[10];
+	for(uint8_t i=0; i<WIFI_APLISTMAX; i++){
+		if(wifiApList[i].rssi != 0){
+			debugPrintf(&(wifiApList[i].name[0]));
+			debugPrintf("   ==>  ");
+
+			itoa(wifiApList[i].rssi, numToStr, 10);
+			debugPrintf(numToStr);
+
+			debugPrintf("\r\n");
+		}
+	}
+}
+
+void scanWiFiAp()
+{
+	wifiPrintf("AT+CWLAP\r\n");
+	waitForRespOK();
+}
+
 void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 {
-	static TProcState eState = init;
+	TProcState eState = init;
 
 	char numToStr[10];
 
@@ -603,80 +643,26 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 		case init:
 			switch(cmdType){
 				case ready:
-					//debugPrintf(" READY!!!!\r\n");
 					wifiPrintf("ATE0\r\n");
+					waitForRespOK();
+					wifiPrintf("AT+GMR\r\n");
+					waitForRespOK();
 					break;
 				case wifi_discon:
+					commonInit();
+					eState = waitForCmd;
 					break;
 				case wifi_conn:
+					commonInit();
+					eState = waitForCmd;
 					break;
 				case wifi_gotip:
 					break;
 				default:
 					break;
 			}
-			if(cmdType == CMD_OK){
-				wifiPrintf("AT+CIPMUX=1\r\n");
-				eState = cipserver;
-			}
 			break;
-		case cipserver:
-			switch(cmdType){
-				case CMD_OK:
-					wifiPrintf("AT+CIPSERVER=1,80\r\n");
-					eState = checkTO;
-					break;
-				default:
-					break;
-			}
-			break;
-		case checkTO:
-				if(cmdType == CMD_OK){
-					wifiPrintf("AT+CIPSTO?\r\n");
-					eState = checkIp;
-				}
-		case checkIp:
-			switch(cmdType){
-				case CIPSTO:
-					wifiPrintf("AT+CIFSR\r\n");
-					eState = checkForNetworks;
-					break;
-				case CIFSR_STAMAC:
-					//debugPrintf(APIP);
-					//debugPrintf(STAPIP);
-					break;
-				default:
-					break;
-			}
-			break;
-		case checkForNetworks:
-			switch(cmdType){
-				case CMD_OK:
-					wifiPrintf("AT+CWLAP\r\n");
 
-					eState = checkForNetworksList;
-					break;
-				default:
-					break;
-			}
-			break;
-		case checkForNetworksList:
-			if(cmdType == CMD_OK){
-				eState = waitForCmd;
-//					uint8_t i;
-//					for(i=0; i<WIFI_APLISTMAX; i++){
-//						if(wifiApList[i].rssi != 0){
-//							debugPrintf(&(wifiApList[i].name[0]));
-//							debugPrintf("   ==>  ");
-//
-//							itoa(wifiApList[i].rssi, numToStr, 10);
-//							debugPrintf(numToStr);
-//
-//							debugPrintf("\r\n");
-//						}
-//					}
-			}
-			break;
 		case waitForCmd:
 			if(cmdType == IPD)
 				eState = processMsgRecv;

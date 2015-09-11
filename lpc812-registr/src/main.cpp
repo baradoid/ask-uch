@@ -18,7 +18,7 @@
 
 #include "utils.h"
 #include <stdint.h>
-
+#include <stdlib.h>
 
 #define SysTick_VALUE (SystemCoreClock/1000 - 1)
 
@@ -36,11 +36,13 @@ void vUartTask ();
 #define RINGBUF_FULL_BITNUM 0
 #define UARTTMPBUF_FULL_BITNUM 1
 uint8_t errword;
+uint64_t SysTickCnt = 0;
 
 int main(void)
 {
+	uint64_t cnt_15s=15000, cnt_1ms=0, cnt_10ms=0, cnt_100ms=0;
 	prvSetupHardware();
-	//SysTick_Config(SysTick_VALUE);
+	SysTick_Config(SysTick_VALUE);
 
 	/* Before using the ring buffers, initialize them using the ring
 	   buffer init function */
@@ -63,6 +65,27 @@ int main(void)
     		while(1);
     	}
 
+        if( SysTickCnt >= cnt_100ms ){
+            cnt_100ms = SysTickCnt+100;
+        }
+        if( SysTickCnt >= cnt_15s ){
+        	cnt_15s = SysTickCnt+15000;
+        	debugPrintf("time to rescan wifi\r\n");
+        	scanWiFiAp();
+        }
+        //	char iToStr[10];
+        //	if(SysTickCnt > 1000){
+        //		SysTickCnt = 0;
+        		//debugPrintf("sec \r\n");
+        //		if(secondsCount++ >= 59){
+        //			secondsCount = 0;
+        //			minutsCount++;
+        //			itoa(minutsCount, iToStr, 10);
+        //			debugPrintf("min ");
+        //			debugPrintf(iToStr);
+        //			debugPrintf("\r\n");
+        //		}
+        //	}
         i++ ;
     }
     return 0 ;
@@ -123,19 +146,7 @@ extern "C" void UART1_IRQHandler( void )
 	}
 }
 
-//uint32_t secondsCount = 0;
-//uint32_t minutsCount = 0;
-uint32_t systickCount = 0;
 extern "C" void SysTick_Handler(void)
 {
-	systickCount++;
-	if(systickCount > 1000){
-		systickCount = 0;
-		debugPrintf("sec \r\n");
-		//if(secondsCount++ >=59){
-			//secondsCount = 0;
-			//minutsCount++;
-			//debugPrintf("min \r\n");
-		//}
-	}
+	SysTickCnt++;
 }

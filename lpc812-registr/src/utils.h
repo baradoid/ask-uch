@@ -40,7 +40,7 @@ typedef enum {
 
 void parseCommand(TCmdType &cmdType, char *wifiMsg);
 void processMsg(TCmdType cmdType, uint16_t wifiMsgLen);
-
+void scanWiFiAp();
 
 /* SysTick constants */
 //#define SYSTICK_ENABLE              0                                          /* Config-Bit to start or stop the SysTick Timer                         */

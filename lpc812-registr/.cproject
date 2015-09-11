@@ -254,4 +254,5 @@
 			<resource resourceType="PROJECT" workspacePath="/lpc812-registr"/>
 		</configuration>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>
