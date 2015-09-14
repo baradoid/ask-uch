@@ -70,8 +70,8 @@ int main(void)
         }
         if( SysTickCnt >= cnt_15s ){
         	cnt_15s = SysTickCnt+15000;
-        	debugPrintf("time to rescan wifi\r\n");
-        	scanWiFiAp();
+        	//debugPrintf("time to rescan wifi\r\n");
+        	//scanWiFiAp();
         }
         //	char iToStr[10];
         //	if(SysTickCnt > 1000){
