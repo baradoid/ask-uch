@@ -20,8 +20,11 @@ const uint32_t ExtRateIn = 0;
 __NOINIT_DEF char htmlBody[htmlBodyLen];
 
 __RODATA(text) char htmlSimple[] = "HTTP/1.1 200 OK\r\n"
-		"Content-Type: text/html;\r\n\r\n"
-		"<html> <head><title>AIIS ASKUE</title></head><body>simple html</body></html>\0";
+		"Date: Wed, 11 Feb 2009 11:20:59 GMT\r\n"
+		"Content-Type: text/html;charset=utf-8\r\n"
+		"Content-Length: 77\r\n"
+		"Connection: close\r\n\r\n"
+		"<html> <head><title>AIIS ASKUE</title></head><body>simple html</body></html>";
 
 __RODATA(text) char html404[] = "HTTP/1.1 404 Not Found\r\n";
 
@@ -415,6 +418,9 @@ void parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 	debugPrintf(numToStr);
 	debugPrintf(" chars already recvd\r\n");
 	*msgLen -= tailLen;
+
+
+
 }
 
 TCmdType parseCIFSR(char *str)
@@ -469,16 +475,220 @@ void parseCWLAP(char *str)
 	wifiApInd++;
 }
 
+
 uint8_t curConnInd = 0;
 int16_t msgLength = 0;
+
+TCmdType blockWaitCmd()
+{
+	extern char tempRecvBuf[];
+	uint8_t tempRecvBufInd = 0;
+
+	extern RINGBUFF_T rxring;
+
+	tempRecvBuf[0] = 0;
+
+	while(1){
+		if(RingBuffer_Pop(&rxring, &(tempRecvBuf[tempRecvBufInd]))){
+			if( (tempRecvBuf[tempRecvBufInd] == '\n') ||
+				((tempRecvBuf[0] == '>') && (tempRecvBufInd==1))
+			  )
+			{
+				tempRecvBufInd++;
+				tempRecvBuf[tempRecvBufInd] = '\0';
+
+				Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+				TCmdType cmdType = UNKNWON;
+				parseCommand(cmdType, tempRecvBuf);
+				//processMsg(cmdType, tempRecvBufInd);
+				tempRecvBufInd = 0 ;
+				return cmdType;
+			}
+			else{
+				if((msgLength > 0) && (tempRecvBufInd == (msgLength-1))){
+					tempRecvBufInd++;
+					tempRecvBuf[tempRecvBufInd] = '\0';
+					debugPrintf("!!! affected !!! \r\n");
+					Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+					TCmdType cmdType = TEXT;
+					//processMsg(cmdType, tempRecvBufInd);
+					tempRecvBufInd = 0 ;
+					return UNKNWON;
+				}
+				else
+					tempRecvBufInd++;
+			}
+		}
+	}
+}
+
+//void waitForRespText()
+//{
+//	while(1){
+//		TCmdType cmd = blockWaitCmd();
+//		if( cmd == TEXT){
+//			break;
+//		}
+//	}
+//}
+
+void waitForRespOK()
+{
+	while(1){
+		TCmdType cmd = blockWaitCmd();
+		if( cmd == CMD_OK){
+			break;
+		}
+	}
+}
+
+uint16_t blockWaitTEXT()
+{
+	extern char tempRecvBuf[];
+	uint8_t tempRecvBufInd = 0;
+
+	extern RINGBUFF_T rxring;
+
+	tempRecvBuf[0] = 0;
+
+	while(1){
+		if(RingBuffer_Pop(&rxring, &(tempRecvBuf[tempRecvBufInd]))){
+			if( (tempRecvBuf[tempRecvBufInd] == '\n') ||
+				((tempRecvBuf[0] == '>') && (tempRecvBufInd==1))
+			  )
+			{
+				tempRecvBufInd++;
+				tempRecvBuf[tempRecvBufInd] = '\0';
+
+				uint16_t msgSize = tempRecvBufInd;
+				Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+				tempRecvBufInd = 0 ;
+				return msgSize;
+			}
+			else{
+				if((msgLength > 0) && (tempRecvBufInd == (msgLength-1))){
+					tempRecvBufInd++;
+					tempRecvBuf[tempRecvBufInd] = '\0';
+					debugPrintf("!!! affected !!! \r\n");
+					Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+					TCmdType cmdType = TEXT;
+					//processMsg(cmdType, tempRecvBufInd);
+					uint16_t msgSize = tempRecvBufInd;
+					tempRecvBufInd = 0 ;
+					return msgSize;
+				}
+				else
+					tempRecvBufInd++;
+			}
+		}
+	}
+}
 
 void parseCommand(TCmdType &cmdType, char *wifiMsg)
 {
 	cmdType = UNKNWON;
 	if(wifiMsg[0] == '+'){
 		if(MEMCMPx(wifiMsg, "+IPD") == 0){
-			//debugPrintf("!!! +IPD !!! ");
+			char numToStr[10];
+			debugPrintf("!!! +IPD !!! 0 \r\n");
 			parseIPD(wifiMsg, &curConnInd, &msgLength);
+
+			while(msgLength > 0){
+				uint16_t wifiMsgLen = blockWaitTEXT();
+				msgLength -= wifiMsgLen;
+
+				/*debugPrintf(" => ");
+				itoa(wifiMsgLen, numToStr, 10);
+				debugPrintf(numToStr);
+				debugPrintf(" rn ");
+				itoa(msgLength, numToStr, 10);
+				debugPrintf(numToStr);
+				debugPrintf(" chs\r\n");*/
+			}
+
+			debugPrintf(" message recvd! \r\n");
+
+			if(htmlReqType == GET_ROOT){
+
+				wifiPrintf("AT+CIPSEND=");
+				debugPrintf("AT+CIPSEND=");
+				itoa(curConnInd, numToStr, 10);
+				wifiPrintf(numToStr);
+				debugPrintf(numToStr);
+				wifiPrintf(",");
+				debugPrintf(",");
+				itoa(strlen(&(htmlSimple[0])), numToStr, 10);
+				wifiPrintf(numToStr);
+				debugPrintf(numToStr);
+				wifiPrintf("\r\n");
+				debugPrintf("\r\n");
+
+				while(1){
+					TCmdType cmd = blockWaitCmd();
+					if( cmd == ready_to_send){
+						break;
+					}
+
+					if( cmd == CMD_CLOSED){
+						debugPrintf("detect CLOSED \r\n");
+						return;
+					}
+					if(cmd == busy_s){
+						//while (1) ;
+					}
+
+				}
+				debugPrintf("ready_to_send \r\n");
+				wifiPrintf(&(htmlSimple[0]));
+				while(1){
+					TCmdType cmd = blockWaitCmd();
+					if( cmd == SEND_OK){
+						break;
+					}
+				}
+				debugPrintf("!!! htmlSimple SEND_OK detected!!!\r\n");
+			}
+			else {
+				debugPrintf("not ROOT. send 404\r\n");
+
+				wifiPrintf("AT+CIPSEND=");
+				debugPrintf("AT+CIPSEND=");
+				itoa(curConnInd, numToStr, 10);
+				wifiPrintf(numToStr);
+				debugPrintf(numToStr);
+				wifiPrintf(",");
+				debugPrintf(",");
+				itoa(strlen(&(html404[0])), numToStr, 10);
+				wifiPrintf(numToStr);
+				debugPrintf(numToStr);
+				wifiPrintf("\r\n");
+				debugPrintf("\r\n");
+
+				while(1){
+					TCmdType cmd = blockWaitCmd();
+					if( cmd == ready_to_send){
+						break;
+					}
+
+					if( cmd == CMD_CLOSED){
+						debugPrintf("detect CLOSED \r\n");
+						//eState = waitForCmd;
+						return;
+					}
+				}
+				debugPrintf("!!! htmlSend0 ready_to_send detected!!!\r\n");
+				wifiPrintf(&(html404[0]));
+				while(1){
+					TCmdType cmd = blockWaitCmd();
+					if( cmd == SEND_OK){
+						break;
+					}
+				}
+				debugPrintf("!!! html404 SEND_OK detected!!!\r\n");
+				//eState = waitForCmd;
+			}
+		//}
+
 			cmdType = IPD;
 		}
 		else if(MEMCMPx(wifiMsg, "+CIFSR") == 0){
@@ -529,63 +739,13 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 	}
 	else{
 		cmdType = TEXT;
+//		debugPrintf("!!! TEXT !!! \r\n");
 //		if((msgLength == 0) && (strcmp(wifiMsg, "\r\n") != 0) )
 //			debugPrintf("!!! unknown cmd!!! \r\n");
 	}
 }
 
-TCmdType blockWaitCmd()
-{
-	extern char tempRecvBuf[];
-	uint8_t tempRecvBufInd = 0;
 
-	extern RINGBUFF_T rxring;
-
-	tempRecvBuf[0] = 0;
-
-	while(1){
-		if(RingBuffer_Pop(&rxring, &(tempRecvBuf[tempRecvBufInd]))){
-			if( (tempRecvBuf[tempRecvBufInd] == '\n') ||
-				((tempRecvBuf[0] == '>') && (tempRecvBufInd==1))
-			  )
-			{
-				tempRecvBufInd++;
-				tempRecvBuf[tempRecvBufInd] = '\0';
-
-				Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
-				TCmdType cmdType = UNKNWON;
-				parseCommand(cmdType, tempRecvBuf);
-				//processMsg(cmdType, tempRecvBufInd);
-				tempRecvBufInd = 0 ;
-				return cmdType;
-			}
-			else{
-				if((msgLength > 0) && (tempRecvBufInd == (msgLength-1))){
-					tempRecvBufInd++;
-					tempRecvBuf[tempRecvBufInd] = '\0';
-					debugPrintf("!!! affected !!! \r\n");
-					Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
-					TCmdType cmdType = TEXT;
-					//processMsg(cmdType, tempRecvBufInd);
-					tempRecvBufInd = 0 ;
-					return UNKNWON;
-				}
-				else
-					tempRecvBufInd++;
-			}
-		}
-	}
-}
-
-void waitForRespOK()
-{
-	while(1){
-		TCmdType cmd = blockWaitCmd();
-		if( cmd == CMD_OK){
-			break;
-		}
-	}
-}
 void commonInit()
 {
 	wifiPrintf("AT+CIPMUX=1\r\n");
@@ -600,18 +760,18 @@ void commonInit()
 	wifiPrintf("AT+CWLAP\r\n");
 	waitForRespOK();
 
-	char numToStr[10];
-	for(uint8_t i=0; i<WIFI_APLISTMAX; i++){
-		if(wifiApList[i].rssi != 0){
-			debugPrintf(&(wifiApList[i].name[0]));
-			debugPrintf("   ==>  ");
-
-			itoa(wifiApList[i].rssi, numToStr, 10);
-			debugPrintf(numToStr);
-
-			debugPrintf("\r\n");
-		}
-	}
+//	char numToStr[10];
+//	for(uint8_t i=0; i<WIFI_APLISTMAX; i++){
+//		if(wifiApList[i].rssi != 0){
+//			debugPrintf(&(wifiApList[i].name[0]));
+//			debugPrintf("   ==>  ");
+//
+//			itoa(wifiApList[i].rssi, numToStr, 10);
+//			debugPrintf(numToStr);
+//
+//			debugPrintf("\r\n");
+//		}
+//	}
 }
 
 void scanWiFiAp()
@@ -622,7 +782,7 @@ void scanWiFiAp()
 
 void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 {
-	TProcState eState = init;
+	static TProcState eState = init;
 
 	char numToStr[10];
 
@@ -653,10 +813,10 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 					eState = waitForCmd;
 					break;
 				case wifi_conn:
-					commonInit();
-					eState = waitForCmd;
 					break;
 				case wifi_gotip:
+					commonInit();
+					eState = waitForCmd;
 					break;
 				default:
 					break;
@@ -664,11 +824,14 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 			break;
 
 		case waitForCmd:
-			if(cmdType == IPD)
-				eState = processMsgRecv;
+			if(cmdType == IPD){
+				//eState = processMsgRecv;
+				debugPrintf(" processMsgRecv IPD type\r\n");
+			}
 			break;
 		case processMsgRecv:
 			if(cmdType == TEXT){
+				debugPrintf(" processMsgRecv TEXT type\r\n");
 				if(msgLength > 0){
 					msgLength -= wifiMsgLen;
 
@@ -793,13 +956,13 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 						eState = htmlSend0;
 					}
 					else{
-						/*debugPrintf(" => ");
+						debugPrintf(" => ");
 						itoa(wifiMsgLen, numToStr, 10);
 						debugPrintf(numToStr);
 						debugPrintf(" rn ");
 						itoa(msgLength, numToStr, 10);
 						debugPrintf(numToStr);
-						debugPrintf(" chs\r\n");*/
+						debugPrintf(" chs\r\n");
 					}
 				}
 			}
