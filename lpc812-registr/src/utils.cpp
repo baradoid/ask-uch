@@ -243,6 +243,15 @@ uint8_t curUartWriteBuf = 0;
 //}
 
 
+void sendCipClose(uint8_t id)
+{
+	char numToStr[10];
+	wifiPrintf("AT+CIPCLOSE=");
+	itoa(id, numToStr, 10);
+	wifiPrintf(numToStr);
+	wifiPrintf("\r\n");
+}
+
 
 
 #define addToHtml(a) strcat (htmlBody, a)
@@ -259,7 +268,7 @@ uint32_t prepareHtmlData()
 	//itoa(xPortGetFreeHeapSize(), numToStr, 10);
 	//addToHtml(numToStr);
 
-	addToHtml("<form method=\"post\">");
+	addToHtml("<form method=\"get\">");
 
 	for(i=0;i<WIFI_APLISTMAX;i++){
 		if(wifiApList[i].rssi != 0){
@@ -280,8 +289,13 @@ uint32_t prepareHtmlData()
 
 		}
 	}
-	addToHtml("<p><input type=\"submit\"></p>");
-	addToHtml("</form></section></div>");
+	addToHtml("<p>PSK Password: <input type=\"text\" name=\"pswd\" /></p>");
+	addToHtml("<p><input type=\"submit\" name=\"submit\" value=\"submit\">");
+	addToHtml("   <input type=\"submit\" name=\"submit\" value=\"update\"></p>");
+	addToHtml("</form>");
+	//addToHtml("<form  method=\"get\"><input type=\"submit\" value=\"update\"></form>");
+	addToHtml("</section></div>");
+
 
 //	"<select name=\"securType\" size = 1> "
 //	"<option value=\"val1\">valText1</option>"
@@ -536,8 +550,63 @@ void waitForRespOK()
 {
 	while(1){
 		TCmdType cmd = blockWaitCmd();
-		if( cmd == CMD_OK){
+		if( cmd == CMD_OK)
 			break;
+	}
+}
+
+void waitForRespOKorRespError()
+{
+	while(1){
+		TCmdType cmd = blockWaitCmd();
+		if( cmd == CMD_OK)
+			break;
+		if(cmd == RESP_ERROR)
+			break;
+	}
+}
+
+void waitForCIPSENDResp()
+{
+	while(1){
+		TCmdType cmd = blockWaitCmd();
+		if( cmd == CMD_OK)
+			break;
+		if(cmd == RESP_ERROR)
+			break;
+	}
+}
+
+void scanWiFiAp()
+{
+	wifiPrintf("AT+CWLAP\r\n");
+	waitForRespOK();
+}
+
+void blockWaitSendOK()
+{
+	while(1){
+		TCmdType cmd = blockWaitCmd();
+		if(cmd == RESP_SEND_OK)
+			break;
+		if(cmd == RESP_ERROR)
+			break;
+	}
+}
+
+void blockWaitForReadyToSend()
+{
+	while(1){
+		TCmdType cmd = blockWaitCmd();
+		if( cmd == ready_to_send){
+			return;
+		}
+		if( cmd == CMD_CLOSED){
+			debugPrintf("detect CLOSED \r\n");
+			return;
+		}
+		if(cmd == busy_s){
+			//while (1) ;
 		}
 	}
 }
@@ -610,43 +679,46 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 
 			if(htmlReqType == GET_ROOT){
 
-				wifiPrintf("AT+CIPSEND=");
-				debugPrintf("AT+CIPSEND=");
-				itoa(curConnInd, numToStr, 10);
-				wifiPrintf(numToStr);
-				debugPrintf(numToStr);
-				wifiPrintf(",");
-				debugPrintf(",");
-				itoa(strlen(&(htmlSimple[0])), numToStr, 10);
-				wifiPrintf(numToStr);
-				debugPrintf(numToStr);
-				wifiPrintf("\r\n");
-				debugPrintf("\r\n");
+//				wifiPrintf("AT+CIPSEND=");
+//				debugPrintf("AT+CIPSEND=");
+//				itoa(curConnInd, numToStr, 10);
+//				wifiPrintf(numToStr);
+//				debugPrintf(numToStr);
+//				wifiPrintf(",");
+//				debugPrintf(",");
+//				itoa(strlen(&(htmlSimple[0])), numToStr, 10);
+//				wifiPrintf(numToStr);
+//				debugPrintf(numToStr);
+//				wifiPrintf("\r\n");
+//				debugPrintf("\r\n");
+//
+//				while(1){
+//					TCmdType cmd = blockWaitCmd();
+//					if( cmd == ready_to_send){
+//						break;
+//					}
+//
+//					if( cmd == CMD_CLOSED){
+//						debugPrintf("detect CLOSED \r\n");
+//						return;
+//					}
+//					if(cmd == busy_s){
+//						//while (1) ;
+//					}
+//
+//				}
+//				//debugPrintf("ready_to_send \r\n");
+//				wifiPrintf(&(htmlSimple[0]));
+//				debugPrintf(&(htmlSimple[0]));
+//				while(1){
+//					TCmdType cmd = blockWaitCmd();
+//					if( cmd == RESP_SEND_OK){
+//						break;
+//					}
+//				}
 
-				while(1){
-					TCmdType cmd = blockWaitCmd();
-					if( cmd == ready_to_send){
-						break;
-					}
 
-					if( cmd == CMD_CLOSED){
-						debugPrintf("detect CLOSED \r\n");
-						return;
-					}
-					if(cmd == busy_s){
-						//while (1) ;
-					}
 
-				}
-				//debugPrintf("ready_to_send \r\n");
-				wifiPrintf(&(htmlSimple[0]));
-				debugPrintf(&(htmlSimple[0]));
-				while(1){
-					TCmdType cmd = blockWaitCmd();
-					if( cmd == SEND_OK){
-						break;
-					}
-				}
 //				debugPrintf("!!! htmlSimple SEND_OK detected!!!\r\n");
 //				for(int i=0; i<100000; i++) ;
 //				debugPrintf("!!! htmlSimple SEND_OK detected!!!\r\n");
@@ -661,6 +733,63 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 //					}
 //				}
 //				debugPrintf("!!! AT+CIPCLOSE CMD_OK detected!!!\r\n");
+
+
+				wifiPrintf("AT+CIPSEND=");
+				debugPrintf("AT+CIPSEND=");
+				itoa(curConnInd, numToStr, 10);
+				wifiPrintf(numToStr);
+				debugPrintf(numToStr);
+				wifiPrintf(",");
+				debugPrintf(",");
+				itoa(strlen(&(htmlPart1[0])), numToStr, 10);
+				wifiPrintf(numToStr);
+				debugPrintf(numToStr);
+				wifiPrintf("\r\n");
+				debugPrintf("\r\n");
+
+				blockWaitForReadyToSend();
+
+				wifiPrintf(&(htmlPart1[0]));
+
+				blockWaitSendOK();
+
+				debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
+				prepareHtmlData();
+				wifiPrintf("AT+CIPSEND=");
+				itoa(curConnInd, numToStr, 10);
+				wifiPrintf(numToStr);
+				wifiPrintf(",");
+				itoa(strlen(&(htmlBody[0])), numToStr, 10);
+				wifiPrintf(numToStr);
+				wifiPrintf("\r\n");
+
+				blockWaitForReadyToSend();
+
+				wifiPrintf(&(htmlBody[0]));
+
+				blockWaitSendOK();
+
+				debugPrintf("!!! htmlBody SEND_OK detected!!!\r\n");
+				wifiPrintf("AT+CIPSEND=");
+				itoa(curConnInd, numToStr, 10);
+				wifiPrintf(numToStr);
+				wifiPrintf(",");
+				itoa(strlen(&(htmlPart2[0])), numToStr, 10);
+				wifiPrintf(numToStr);
+				wifiPrintf("\r\n");
+
+				blockWaitForReadyToSend();
+
+				wifiPrintf(&(htmlPart2[0]));
+
+				blockWaitSendOK();
+
+				debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
+
+				sendCipClose(curConnInd);
+
+				waitForRespOK();
 			}
 			else {
 				debugPrintf("not ROOT. send 404\r\n");
@@ -694,7 +823,7 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 				wifiPrintf(&(html404[0]));
 				while(1){
 					TCmdType cmd = blockWaitCmd();
-					if( cmd == SEND_OK){
+					if( cmd == RESP_SEND_OK){
 						break;
 					}
 				}
@@ -718,6 +847,8 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 		if(strcmp(wifiMsg, "OK\r\n") == 0)
 			cmdType = CMD_OK;
 	}
+	else if(strcmp(wifiMsg, "ERROR\r\n") == 0)
+		cmdType = RESP_ERROR;
 	else if(strlen(wifiMsg)==11){
 		if(strcmp(wifiMsg, "busy s...\r\n") == 0)
 			cmdType = busy_s;
@@ -732,7 +863,7 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 		cmdType = CMD_CLOSED;
 	}
 	else if(strcmp(wifiMsg, "SEND OK\r\n") == 0)
-		cmdType = SEND_OK;
+		cmdType = RESP_SEND_OK;
 	else if(strcmp(wifiMsg, "> \r\n") == 0){
 		debugPrintf("!!!SEND_READY!!!\r\n");
 		cmdType = SEND_READY;
@@ -771,8 +902,15 @@ void commonInit()
 	wifiPrintf("AT+CIFSR\r\n");
 	waitForRespOK();
 
+	wifiPrintf("AT+CWMODE_CUR=3\r\n");
+	waitForRespOKorRespError();
+
 	wifiPrintf("AT+CWLAP\r\n");
-	waitForRespOK();
+	waitForRespOKorRespError();
+
+	debugPrintf("Wait AT+CWLAP resp OK! \r\n");
+
+
 
 //	char numToStr[10];
 //	for(uint8_t i=0; i<WIFI_APLISTMAX; i++){
@@ -788,11 +926,7 @@ void commonInit()
 //	}
 }
 
-void scanWiFiAp()
-{
-	wifiPrintf("AT+CWLAP\r\n");
-	waitForRespOK();
-}
+
 
 void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 {
@@ -821,6 +955,23 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 					waitForRespOK();
 					wifiPrintf("AT+GMR\r\n");
 					waitForRespOK();
+
+					commonInit();
+
+					debugPrintf(" trying to connect\r\n");
+
+					wifiPrintf("AT+CWQAP\r\n");
+					waitForRespOKorRespError();
+
+					debugPrintf("AT+CWJAP_CUR=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+					wifiPrintf("AT+CWJAP_CUR=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+					waitForRespOKorRespError();
+
+					wifiPrintf("AT+CIFSR\r\n");
+					waitForRespOK();
+
+					eState = waitForCmd;
+
 					break;
 				case wifi_discon:
 					commonInit();
@@ -880,9 +1031,50 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 								wifiPrintf(numToStr);
 								debugPrintf(numToStr);
 								wifiPrintf("\r\n");
-								debugPrintf("\r\n");*/
+								debugPrintf("\r\n");
 
+								blockWaitForReadyToSend();
+
+								wifiPrintf(&(htmlPart1[0]));
+
+								blockWaitSendOK();
+
+								debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
+								prepareHtmlData();
 								wifiPrintf("AT+CIPSEND=");
+								itoa(curConnInd, numToStr, 10);
+								wifiPrintf(numToStr);
+								wifiPrintf(",");
+								itoa(strlen(&(htmlBody[0])), numToStr, 10);
+								wifiPrintf(numToStr);
+								wifiPrintf("\r\n");
+
+								blockWaitForReadyToSend();
+
+								wifiPrintf(&(htmlBody[0]));
+
+								blockWaitSendOK();
+
+								debugPrintf("!!! htmlBody SEND_OK detected!!!\r\n");
+								wifiPrintf("AT+CIPSEND=");
+								itoa(curConnInd, numToStr, 10);
+								wifiPrintf(numToStr);
+								wifiPrintf(",");
+								itoa(strlen(&(htmlPart2[0])), numToStr, 10);
+								wifiPrintf(numToStr);
+								wifiPrintf("\r\n");
+
+								blockWaitForReadyToSend();
+
+								wifiPrintf(&(htmlPart2[0]));
+
+								blockWaitSendOK();
+
+								debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
+
+								sendCipClose(curConnInd);*/
+
+								/*wifiPrintf("AT+CIPSEND=");
 								debugPrintf("AT+CIPSEND=");
 								itoa(curConnInd, numToStr, 10);
 								wifiPrintf(numToStr);
@@ -894,6 +1086,10 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 								debugPrintf(numToStr);
 								wifiPrintf("\r\n");
 								debugPrintf("\r\n");
+								blockWaitForReadyToSend();
+								debugPrintf("ready_to_send \r\n");
+								wifiPrintf(&(htmlSimple[0]));*/
+
 								//wifiPrintf("AT+CIPSEND=?\r\n");
 								//debugPrintf("AT+CIPSEND=?\r\n");
 
@@ -905,25 +1101,6 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 								debugPrintf(numToStr);
 								wifiPrintf(",2048\r\n");
 								debugPrintf(",2048\r\n");*/
-
-								while(1){
-									TCmdType cmd = blockWaitCmd();
-									if( cmd == ready_to_send){
-										break;
-									}
-
-									if( cmd == CMD_CLOSED){
-										debugPrintf("detect CLOSED \r\n");
-										eState = waitForCmd;
-										return;
-									}
-									if(cmd == busy_s){
-										//while (1) ;
-									}
-
-								}
-								debugPrintf("ready_to_send \r\n");
-								wifiPrintf(&(htmlSimple[0]));
 								eState = waitForCmd;
 							}
 							else {
@@ -990,7 +1167,7 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 				debugPrintf("!!! htmlSend0 ready_to_send detected!!!\r\n");
 				wifiPrintf(&(html404[0]));
 			}
-			else if(cmdType == SEND_OK){
+			else if(cmdType == RESP_SEND_OK){
 				debugPrintf("!!!! sendHtml404 SEND_OK\r\n");
 				eState = waitForCmd;
 			}
@@ -1030,7 +1207,7 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 				//wifiPrintf("AT+CIPSEND=?\r\n");
 				//debugPrintf("AT+CIPSEND=?\r\n");
 			}
-			else if(cmdType == SEND_OK){
+			else if(cmdType == RESP_SEND_OK){
 				debugPrintf("!!! htmlSendTest0 SEND_OK detected!!!\r\n");
 			}
 			break;
@@ -1047,10 +1224,8 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 			}
 			else if(cmdType == busy_s){
 				debugPrintf("!!! busy detected!!!\r\n");
-
-
 			}
-			else if(cmdType == SEND_OK){
+			else if(cmdType == RESP_SEND_OK){
 				debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
 				prepareHtmlData();
 				wifiPrintf("AT+CIPSEND=");
@@ -1072,7 +1247,7 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 				debugPrintf("!!! htmlSend1 ready_to_send detected!!!\r\n");
 				wifiPrintf(&(htmlBody[0]));
 			}
-			else if(cmdType == SEND_OK){
+			else if(cmdType == RESP_SEND_OK){
 				debugPrintf("!!! htmlSend1 SEND_OK detected!!!\r\n");
 				wifiPrintf("AT+CIPSEND=");
 				itoa(curConnInd, numToStr, 10);
@@ -1098,7 +1273,7 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 		case htmlSend3:
 			break;
 		case htmlClose:
-			if(cmdType == SEND_OK){
+			if(cmdType == RESP_SEND_OK){
 				debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
 				wifiPrintf("AT+CIPCLOSE=");
 				itoa(curConnInd, numToStr, 10);
@@ -1115,7 +1290,7 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 			break;
 
 		case waitForSendOk: //wait for "AT+CIPCLOSE=0 OK
-			if(cmdType == SEND_OK){
+			if(cmdType == RESP_SEND_OK){
 				eState = waitForCmd;
 			}
 			break;
