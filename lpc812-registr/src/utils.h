@@ -40,7 +40,8 @@ typedef enum {
 	UNKNWON
 } TCmdType;
 
-void parseCommand(TCmdType &cmdType, char *wifiMsg);
+//void parseCommand(TCmdType &cmdType, char *wifiMsg);
+void parseCommand(TCmdType &cmdType, char *wifiMsg, bool debugPrintf = false);
 void processMsg(TCmdType cmdType, uint16_t wifiMsgLen);
 void scanWiFiAp();
 

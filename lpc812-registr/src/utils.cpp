@@ -16,8 +16,6 @@ const uint32_t ExtRateIn = 0;
 //#define UART1_RECV_BUF_LENGTH 170
 //__NOINIT_DEF char uartRecvBuf[UART1_RECV_BUF_NUM][UART1_RECV_BUF_LENGTH];
 
-#define htmlBodyLen 1000
-__NOINIT_DEF char htmlBody[htmlBodyLen];
 
 __RODATA(text) char htmlSimple[] = "HTTP/1.1 200 OK\r\n"
 		"Date: Wed, 11 Feb 2009 11:20:59 GMT\r\n"
@@ -49,10 +47,12 @@ __RODATA(text) char htmlPart1[] =  "<html> <head><title>AIIS ASKUE</title>"
 		    "<label for=\"tab2\" title=\"status\">status</label>"
 		    "<input id=\"tab3\" type=\"radio\" name=\"tabs\">"
 		    "<label for=\"tab3\" title=\"settings\">settings</label>"
-		    "<section id=\"content1\"><p>content1</p></section>"
-		    "<section id=\"content2\"><p>content2</p></section>"
-		    "<section id=\"content3\"><p>content3</p>"
-		;
+		    "<section id=\"content1\"><p>content1</p>";
+
+__RODATA(text) char htmlPart3[] =  "</section>"
+	    "<section id=\"content2\"><p>content2</p></section>"
+	    "<section id=\"content3\">";
+
 __RODATA(text) char htmlPart2[] =
 //	"<form method=\"get\">"
 //		"<fieldset>"
@@ -254,12 +254,14 @@ void sendCipClose(uint8_t id)
 
 
 
-#define addToHtml(a) strcat (htmlBody, a)
-uint32_t prepareHtmlData()
+#define addToHtml(a) strcat (bufStr, a)
+
+void prepareHtmlData(char *bufStr)
 {
+
 	uint8_t i;
 	char numToStr[10];
-	strcpy(htmlBody, " ");
+	strcpy(bufStr, " ");
 	//itoa(xTaskGetTickCount(), numToStr, 10);
 	//strcat (htmlBody,numToStr);
 
@@ -307,14 +309,11 @@ uint32_t prepareHtmlData()
 //	"<input name=\"mycolor\" type=\"radio\" value=\"blue\"> blue<br>"
 //	"<input type=\"submit\" value=\"but text\">"
 
-	ASSERT(strlen(&(htmlBody[0])) < htmlBodyLen);
+	//ASSERT(strlen(&(bufStr[0])) < htmlBodyLen);
 
-
-	uint32_t htmlLen = strlen(&(htmlPart1[0]));
-	htmlLen += strlen(&(htmlPart2[0]));
-	htmlLen += strlen(&(htmlBody[0]));
-	return htmlLen;
 }
+
+
 
 typedef enum {
 	idle,
@@ -493,7 +492,7 @@ void parseCWLAP(char *str)
 uint8_t curConnInd = 0;
 int16_t msgLength = 0;
 
-TCmdType blockWaitCmd()
+TCmdType blockWaitCmd(bool debugPrintf = false)
 {
 	extern char tempRecvBuf[];
 	uint8_t tempRecvBufInd = 0;
@@ -511,7 +510,8 @@ TCmdType blockWaitCmd()
 				tempRecvBufInd++;
 				tempRecvBuf[tempRecvBufInd] = '\0';
 
-				Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+				if(debugPrintf == true) Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+
 				TCmdType cmdType = UNKNWON;
 				parseCommand(cmdType, tempRecvBuf);
 				//processMsg(cmdType, tempRecvBufInd);
@@ -522,8 +522,11 @@ TCmdType blockWaitCmd()
 				if((msgLength > 0) && (tempRecvBufInd == (msgLength-1))){
 					tempRecvBufInd++;
 					tempRecvBuf[tempRecvBufInd] = '\0';
-					debugPrintf("!!! affected !!! \r\n");
-					Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+
+					if(debugPrintf == true){
+						debugPrintf("!!! affected !!! \r\n");
+						Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
+					}
 					TCmdType cmdType = TEXT;
 					//processMsg(cmdType, tempRecvBufInd);
 					tempRecvBufInd = 0 ;
@@ -549,7 +552,7 @@ TCmdType blockWaitCmd()
 void waitForRespOK()
 {
 	while(1){
-		TCmdType cmd = blockWaitCmd();
+		TCmdType cmd = blockWaitCmd(true);
 		if( cmd == CMD_OK)
 			break;
 	}
@@ -558,7 +561,7 @@ void waitForRespOK()
 void waitForRespOKorRespError()
 {
 	while(1){
-		TCmdType cmd = blockWaitCmd();
+		TCmdType cmd = blockWaitCmd(true);
 		if( cmd == CMD_OK)
 			break;
 		if(cmd == RESP_ERROR)
@@ -591,13 +594,15 @@ void blockWaitSendOK()
 			break;
 		if(cmd == RESP_ERROR)
 			break;
+		if(cmd == busy_s)
+			debugPrintf("busy!!\r\n");
 	}
 }
 
-void blockWaitForReadyToSend()
+void blockWaitForReadyToSend(bool debugPrintf = false)
 {
 	while(1){
-		TCmdType cmd = blockWaitCmd();
+		TCmdType cmd = blockWaitCmd(debugPrintf);
 		if( cmd == ready_to_send){
 			return;
 		}
@@ -653,7 +658,172 @@ uint16_t blockWaitTEXT()
 	}
 }
 
-void parseCommand(TCmdType &cmdType, char *wifiMsg)
+void sendWifiData(char *str, uint8_t connId, bool debugPrintf = false)
+{
+	char numToStr[5];
+	wifiPrintf("AT+CIPSEND=");
+
+	if(debugPrintf == true)
+		debugPrintf("AT+CIPSEND=");
+
+	itoa(connId, numToStr, 10);
+	wifiPrintf(numToStr);
+
+	if(debugPrintf == true)
+		debugPrintf(numToStr);
+	wifiPrintf(",");
+
+	if(debugPrintf == true)
+		debugPrintf(",");
+
+	itoa(strlen(str), numToStr, 10);
+
+	wifiPrintf(numToStr);
+
+	if(debugPrintf == true)
+		debugPrintf(numToStr);
+
+	wifiPrintf("\r\n");
+
+	if(debugPrintf == true)
+		debugPrintf("\r\n");
+
+	blockWaitForReadyToSend();
+	wifiPrintf(str);
+	blockWaitSendOK();
+}
+
+void startSendWifiDataWithLen(uint16_t strLen, uint8_t connId, bool debugPrintf = false)
+{
+	char numToStr[5];
+	wifiPrintf("AT+CIPSEND=");
+
+	if(debugPrintf == true)
+		debugPrintf("AT+CIPSEND=");
+
+	itoa(connId, numToStr, 10);
+	wifiPrintf(numToStr);
+
+	if(debugPrintf == true)
+		debugPrintf(numToStr);
+
+	wifiPrintf(",");
+
+	if(debugPrintf == true)
+		debugPrintf(",");
+
+	itoa(strLen, numToStr, 10);
+
+	wifiPrintf(numToStr);
+
+	if(debugPrintf == true)
+		debugPrintf(numToStr);
+
+	wifiPrintf("\r\n");
+
+	if(debugPrintf == true)
+		debugPrintf("\r\n");
+
+	blockWaitForReadyToSend(debugPrintf);
+}
+
+void sendSvgData(char *bufStr/*, uint32_t *vals*/)
+{
+	uint32_t minVal=20, maxVal=50;
+///	uint32_t minVal=vals[0], maxVal=vals[0];
+//	for(int i=1; i<12; i++){
+//		if(vals[i] < minVal)
+//			minVal=vals[i];
+//		if(vals[i] > maxVal)
+//			maxVal=vals[i];
+//	}
+//	uint32_t diap = (maxVal - minVal);
+//	uint32_t gap = diap/10;
+//	uint32_t delta = ((float)(diap+2*gap))/7;
+	uint32_t delta = 10;
+	uint32_t gap = 10;
+
+	char numToStr[5];
+	startSendWifiDataWithLen(1908, curConnInd, true);
+
+	wifiPrintf("<svg height=\"160\"  width=\"400\">\r\n");
+
+	wifiPrintf("<g style=\"stroke-dasharray: 5 6; stroke: black;\">\r\n");
+	strcpy(bufStr, "<line x1=\"0\" y1=\"   \" x2=\"400\" y2=\"   \"/>\r\n");
+	for(int i=0, j=20; i<7; i++, j+=20){
+		itoa(j, numToStr, 10);
+		uint8_t sl = strlen(numToStr);
+		memcpy(&(bufStr[17]), numToStr, sl);
+		memcpy(&(bufStr[35]), numToStr, sl);
+		wifiPrintf(bufStr);
+	}
+	wifiPrintf("</g>\r\n");
+
+
+	wifiPrintf("<g font-size=\"12\" font-weight=\"bold\">\r\n");
+	strcpy(bufStr, "<text x=\"2\" y=\"   \">   </text>\r\n");
+	for(int i=0, j=155, k=(minVal-gap); i<8; i++, j-=20, k+=delta){
+		itoa(j, numToStr, 10);
+		uint8_t sl = strlen(numToStr);
+		bufStr[15+2]=' ';
+		memcpy(&(bufStr[15]), numToStr, sl);
+
+		itoa(k, numToStr, 10);
+		sl = strlen(numToStr);
+		//bufStr[20+2]=' ';
+		memcpy(&(bufStr[20]), numToStr, sl);
+
+		wifiPrintf(bufStr);
+	}
+	wifiPrintf("</g>\r\n");
+
+	wifiPrintf("<g style=\"fill: rgb(254,254,127); stroke: black;\">\r\n");
+	strcpy(bufStr, "<rect x=\"25 \" y=\"110\" width=\"25\" height=\"350\"/>\r\n");
+	for(int i=0, j=25; i<12; i++, j+=30){
+
+		itoa(j, numToStr, 10);
+		uint8_t sl = strlen(numToStr);
+		memcpy(&(bufStr[9]), numToStr, sl);
+
+		uint8_t y = 40+rand() % 100;
+		itoa(y, numToStr, 10);
+		sl = strlen(numToStr);
+		bufStr[19] = ' ';
+		memcpy(&(bufStr[17]), numToStr, sl);
+
+		wifiPrintf(bufStr);
+	}
+	wifiPrintf("</g>\r\n");
+
+	wifiPrintf("<g font-size=\"10\" font-weight=\"bold\" text-anchor=\"middle\">\r\n");
+	strcpy(bufStr, "<text x=\"37 \" y=\"155\">-11h</text>\r\n");
+	for(int i=0, j=-11, k=37; i<12; i++, j++, k+=30){
+
+		bufStr[24] = ' ';
+		bufStr[25] = ' ';
+		itoa(j, numToStr, 10);
+		strcat(numToStr, "h");
+		uint8_t sl = strlen(numToStr);
+		memcpy(&(bufStr[22]), numToStr, sl);
+
+		itoa(k, numToStr, 10);
+		sl = strlen(numToStr);
+		memcpy(&(bufStr[9]), numToStr, sl);
+
+		wifiPrintf(bufStr);
+		//wifiPrintf("<text x=\"37 \" y=\"155\">-11h</text>\r\n");
+	}
+	wifiPrintf("</g>\r\n");
+
+	wifiPrintf("<rect height=\"160\" width=\"400\" style=\"stroke:black; fill:none\"/>\r\n");
+	wifiPrintf("</svg></br></br>\r\n");
+
+	blockWaitSendOK();
+}
+
+
+char htmlBody[100];
+void parseCommand(TCmdType &cmdType, char *wifiMsg, bool debugPrintf)
 {
 	cmdType = UNKNWON;
 	if(wifiMsg[0] == '+'){
@@ -735,99 +905,73 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg)
 //				debugPrintf("!!! AT+CIPCLOSE CMD_OK detected!!!\r\n");
 
 
-				wifiPrintf("AT+CIPSEND=");
-				debugPrintf("AT+CIPSEND=");
-				itoa(curConnInd, numToStr, 10);
-				wifiPrintf(numToStr);
-				debugPrintf(numToStr);
-				wifiPrintf(",");
-				debugPrintf(",");
-				itoa(strlen(&(htmlPart1[0])), numToStr, 10);
-				wifiPrintf(numToStr);
-				debugPrintf(numToStr);
-				wifiPrintf("\r\n");
-				debugPrintf("\r\n");
 
-				blockWaitForReadyToSend();
+				sendWifiData(htmlPart1, curConnInd);
 
-				wifiPrintf(&(htmlPart1[0]));
+				//uint32_t cntVals[12];
+				for(int i=0; i<4; i++){
+//					cntVals[0] = rand() % 100;
+//					for(int j=1; j<12; j++){
+//						cntVals[j] += rand() % 100;
+//					}
+					sendSvgData(htmlBody/*, cntVals*/);
+				}
+				sendWifiData(htmlPart3, curConnInd);
 
-				blockWaitSendOK();
+				if(debugPrintf == true)	debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
 
-				debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
-				prepareHtmlData();
-				wifiPrintf("AT+CIPSEND=");
-				itoa(curConnInd, numToStr, 10);
-				wifiPrintf(numToStr);
-				wifiPrintf(",");
-				itoa(strlen(&(htmlBody[0])), numToStr, 10);
-				wifiPrintf(numToStr);
-				wifiPrintf("\r\n");
+				prepareHtmlData(htmlBody);
 
-				blockWaitForReadyToSend();
+				sendWifiData(htmlBody, curConnInd);
 
-				wifiPrintf(&(htmlBody[0]));
+				if(debugPrintf == true) debugPrintf("!!! htmlBody SEND_OK detected!!!\r\n");
 
-				blockWaitSendOK();
+				sendWifiData(htmlPart2, curConnInd);
 
-				debugPrintf("!!! htmlBody SEND_OK detected!!!\r\n");
-				wifiPrintf("AT+CIPSEND=");
-				itoa(curConnInd, numToStr, 10);
-				wifiPrintf(numToStr);
-				wifiPrintf(",");
-				itoa(strlen(&(htmlPart2[0])), numToStr, 10);
-				wifiPrintf(numToStr);
-				wifiPrintf("\r\n");
-
-				blockWaitForReadyToSend();
-
-				wifiPrintf(&(htmlPart2[0]));
-
-				blockWaitSendOK();
-
-				debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
+				if(debugPrintf == true) debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
 
 				sendCipClose(curConnInd);
 
 				waitForRespOK();
 			}
 			else {
-				debugPrintf("not ROOT. send 404\r\n");
+				if(debugPrintf == true) debugPrintf("not ROOT. send 404\r\n");
 
-				wifiPrintf("AT+CIPSEND=");
-				debugPrintf("AT+CIPSEND=");
-				itoa(curConnInd, numToStr, 10);
-				wifiPrintf(numToStr);
-				debugPrintf(numToStr);
-				wifiPrintf(",");
-				debugPrintf(",");
-				itoa(strlen(&(html404[0])), numToStr, 10);
-				wifiPrintf(numToStr);
-				debugPrintf(numToStr);
-				wifiPrintf("\r\n");
-				debugPrintf("\r\n");
+				sendWifiData(html404, curConnInd, debugPrintf);
+//				wifiPrintf("AT+CIPSEND=");
+//				debugPrintf("AT+CIPSEND=");
+//				itoa(curConnInd, numToStr, 10);
+//				wifiPrintf(numToStr);
+//				debugPrintf(numToStr);
+//				wifiPrintf(",");
+//				debugPrintf(",");
+//				itoa(strlen(&(html404[0])), numToStr, 10);
+//				wifiPrintf(numToStr);
+//				debugPrintf(numToStr);
+//				wifiPrintf("\r\n");
+//				debugPrintf("\r\n");
 
 				while(1){
-					TCmdType cmd = blockWaitCmd();
+					TCmdType cmd = blockWaitCmd(debugPrintf);
 					if( cmd == ready_to_send){
 						break;
 					}
 
 					if( cmd == CMD_CLOSED){
-						debugPrintf("detect CLOSED \r\n");
+						if(debugPrintf == true) debugPrintf("detect CLOSED \r\n");
 						//eState = waitForCmd;
 						return;
 					}
 				}
-				debugPrintf("!!! htmlSend0 ready_to_send detected!!!\r\n");
+				if(debugPrintf == true) debugPrintf("!!! htmlSend0 ready_to_send detected!!!\r\n");
 				wifiPrintf(&(html404[0]));
 				while(1){
-					TCmdType cmd = blockWaitCmd();
+					TCmdType cmd = blockWaitCmd(debugPrintf);
 					if( cmd == RESP_SEND_OK){
 						break;
 					}
 				}
-				debugPrintf("!!! html404 SEND_OK detected!!!\r\n");
+				if(debugPrintf == true) debugPrintf("!!! html404 SEND_OK detected!!!\r\n");
 				//eState = waitForCmd;
 			}
 		//}
@@ -1227,14 +1371,6 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 			}
 			else if(cmdType == RESP_SEND_OK){
 				debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
-				prepareHtmlData();
-				wifiPrintf("AT+CIPSEND=");
-				itoa(curConnInd, numToStr, 10);
-				wifiPrintf(numToStr);
-				wifiPrintf(",");
-				itoa(strlen(&(htmlBody[0])), numToStr, 10);
-				wifiPrintf(numToStr);
-				wifiPrintf("\r\n");
 				eState = htmlSend1;
 			}
 			break;
@@ -1245,17 +1381,10 @@ void processMsg(TCmdType cmdType, uint16_t wifiMsgLen)
 			}
 			else if(cmdType == ready_to_send){
 				debugPrintf("!!! htmlSend1 ready_to_send detected!!!\r\n");
-				wifiPrintf(&(htmlBody[0]));
+				//wifiPrintf(&(htmlBody[0]));
 			}
 			else if(cmdType == RESP_SEND_OK){
 				debugPrintf("!!! htmlSend1 SEND_OK detected!!!\r\n");
-				wifiPrintf("AT+CIPSEND=");
-				itoa(curConnInd, numToStr, 10);
-				wifiPrintf(numToStr);
-				wifiPrintf(",");
-				itoa(strlen(&(htmlPart2[0])), numToStr, 10);
-				wifiPrintf(numToStr);
-				wifiPrintf("\r\n");
 				eState = htmlSend2;
 			}
 			break;
