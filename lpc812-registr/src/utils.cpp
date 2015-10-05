@@ -904,7 +904,8 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg, bool debugPrintf)
 //				}
 //				debugPrintf("!!! AT+CIPCLOSE CMD_OK detected!!!\r\n");
 
-
+				extern uint64_t SysTickCnt;
+				uint32_t startGenPage =  (uint32_t)SysTickCnt;
 
 				sendWifiData(htmlPart1, curConnInd);
 
@@ -927,6 +928,10 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg, bool debugPrintf)
 				if(debugPrintf == true) debugPrintf("!!! htmlBody SEND_OK detected!!!\r\n");
 
 				sendWifiData(htmlPart2, curConnInd);
+
+				itoa(SysTickCnt - startGenPage, htmlBody, 10);
+				debugPrintf(htmlBody);
+				debugPrintf(" for page generate\r\n");
 
 				if(debugPrintf == true) debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
 
