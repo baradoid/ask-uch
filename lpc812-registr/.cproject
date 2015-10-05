@@ -38,6 +38,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lpc_chip_8xx/inc}&quot;"/>
 								</option>
 								<option id="com.crt.advproject.cpp.exe.debug.option.optimization.level.1950454736" name="Optimization Level" superClass="com.crt.advproject.cpp.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.size" valueType="enumerated"/>
+								<option id="com.crt.advproject.cpp.lto.718791804" name="Enable Link-time optimization (-flto)" superClass="com.crt.advproject.cpp.lto" value="false" valueType="boolean"/>
+								<option id="com.crt.advproject.cpp.lto.fat.680732126" superClass="com.crt.advproject.cpp.lto.fat" value="true" valueType="boolean"/>
 								<inputType id="com.crt.advproject.compiler.cpp.input.1405570079" superClass="com.crt.advproject.compiler.cpp.input"/>
 							</tool>
 							<tool id="com.crt.advproject.gcc.exe.debug.1387378314" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.debug">
