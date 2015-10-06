@@ -42,16 +42,28 @@ __RODATA(text) char htmlPart1[] =  "<html> <head><title>AIIS ASKUE</title>"
 		" <body>"
 		"<div class=\"tabs\">"
 		    "<input id=\"tab1\" type=\"radio\" name=\"tabs\" checked>"
-		    "<label for=\"tab1\" title=\"info\">info</label>"
+		    "<label for=\"tab1\" title=\"Status\">Status</label>"
 		    "<input id=\"tab2\" type=\"radio\" name=\"tabs\">"
-		    "<label for=\"tab2\" title=\"status\">status</label>"
+		    "<label for=\"tab2\" title=\"History\">History</label>"
 		    "<input id=\"tab3\" type=\"radio\" name=\"tabs\">"
-		    "<label for=\"tab3\" title=\"settings\">settings</label>"
-		    "<section id=\"content1\"><p>content1</p>";
+		    "<label for=\"tab3\" title=\"Settings\">Settings</label>"
+		    "<section id=\"content1\">"
+		    "Counter statistics<table border=\"3\">"
+			"<tr align=\"center\"><td>Num</td><td>Value</td><td>today, KWh</td><td>today</br>max per h, KWh</td><td>today</br>min per h, KWh</td><td>yesterday, KWh</td></tr>"
+		    "<tr align=\"center\"><td>1</td><td>0000</td><td>0000</td><td>0000</td><td>0000</td><td>0000</td></tr>"
+			"<tr align=\"center\"><td>2</td><td>0000</td><td>0000</td><td>0000</td><td>0000</td><td>0000</td></tr>"
+			"<tr align=\"center\"><td>3</td><td>0000</td><td>0000</td><td>0000</td><td>0000</td><td>0000</td></tr>"
+			"<tr align=\"center\"><td>4</td><td>0000</td><td>0000</td><td>0000</td><td>0000</td><td>0000</td></tr>"
+		    "</table></br>"
+		    "<hr size=\"2\" color=\" #ddd \" />"
+		    "</br>"
+			"Wifi AP status: ON with name \"ESP_9DACCD\"</br>"
+		    "Wifi client status: connected on \"TL-WR842ND\"";
 
-__RODATA(text) char htmlPart3[] =  "</section>"
-	    "<section id=\"content2\"><p>content2</p></section>"
-	    "<section id=\"content3\">";
+
+__RODATA(text) char htmlPartStartSec2[] =  "</section><section id=\"content2\">";
+__RODATA(text) char htmlPartStartSec3[] =  "</section><section id=\"content3\">";
+
 
 __RODATA(text) char htmlPart2[] =
 //	"<form method=\"get\">"
@@ -71,13 +83,6 @@ __RODATA(text) char htmlPart2[] =
 	"</html>\r\n";
 
 
-typedef struct {
-	uint8_t secureType;
-	int8_t	rssi;
-	char name[35];
-} TWifiAp;
-
-#define WIFI_APLISTMAX 5
 TWifiAp wifiApList[WIFI_APLISTMAX];
 
 char APIP[20], STAPIP[20];
@@ -272,25 +277,42 @@ void prepareHtmlData(char *bufStr)
 
 	addToHtml("<form method=\"get\">");
 
+	addToHtml("<table>");
 	for(i=0;i<WIFI_APLISTMAX;i++){
 		if(wifiApList[i].rssi != 0){
+
+			addToHtml("<tr><td>");
 
 			addToHtml("<input name=\"wifiAp\" type=\"radio\" value= ");
 			addToHtml(wifiApList[i].name);
 			addToHtml( "> ");
 			addToHtml(wifiApList[i].name);
 
-			addToHtml( " (");
+
+
+			addToHtml("</td><td>");
+			uint8_t progressValue = 100 - abs(wifiApList[i].rssi);
+			itoa(progressValue, numToStr, 10);
+
+			addToHtml("        <progress value=\"");
+			addToHtml(numToStr);
+			addToHtml("\" max=\"100\">");
+			//addToHtml("<br>");
+			//addToHtml( " ");
 			itoa(wifiApList[i].rssi, numToStr, 10);
 			addToHtml(numToStr);
-			addToHtml( ")");
+			addToHtml( "dB<\/progress> ");
+			addToHtml(numToStr);
+			addToHtml( "dB");
 
-			addToHtml("<br>");
+			addToHtml("</td></tr>");
 			//	"<input name=\"mycolor\" type=\"radio\" value=\"white\"> white <br>"
 
 
 		}
 	}
+	addToHtml("</table>");
+
 	addToHtml("<p>PSK Password: <input type=\"text\" name=\"pswd\" /></p>");
 	addToHtml("<p><input type=\"submit\" name=\"submit\" value=\"submit\">");
 	addToHtml("   <input type=\"submit\" name=\"submit\" value=\"update\"></p>");
@@ -752,10 +774,10 @@ void sendWifiDataToBuf(char *str, uint8_t connId, bool debugPrintf = false)
 void startSendWifiDataWithLen(uint16_t strLen, uint8_t connId, uint8_t segInd, bool debugPrintf = false)
 {
 	char numToStr[5];
-	wifiPrintf("AT+CIPSENDBUF=");
+	wifiPrintf("AT+CIPSEND=");
 
 	if(debugPrintf == true)
-		debugPrintf("AT+CIPSENDBUF=");
+		debugPrintf("AT+CIPSEND=");
 
 	itoa(connId, numToStr, 10);
 	wifiPrintf(numToStr);
@@ -821,9 +843,10 @@ void sendSvgData(char *bufStr/*, uint32_t *vals*/)
 	static uint8_t sendBufIdx = 1;
 
 	char numToStr[5];
-	//startSendWifiDataWithLen(1908, curConnInd, sendBufIdx++, true);
+	startSendWifiDataWithLen(1908, curConnInd, sendBufIdx++, true);
 
-	sendWifiDataToBuf(svgStr1, curConnInd, true);
+	//sendWifiDataToBuf(svgStr1, curConnInd, true);
+	wifiPrintf(svgStr1);
 
 	strcpy(bufStr, "<line x1=\"0\" y1=\"   \" x2=\"400\" y2=\"   \"/>\r\n");
 	for(int i=0, j=20; i<7; i++, j+=20){
@@ -831,10 +854,12 @@ void sendSvgData(char *bufStr/*, uint32_t *vals*/)
 		uint8_t sl = strlen(numToStr);
 		memcpy(&(bufStr[17]), numToStr, sl);
 		memcpy(&(bufStr[35]), numToStr, sl);
-		sendWifiDataToBuf(bufStr, curConnInd, true);
+		//sendWifiDataToBuf(bufStr, curConnInd, true);
+		wifiPrintf(bufStr);
 	}
 
-	sendWifiDataToBuf(svgStr2, curConnInd, true);
+	//sendWifiDataToBuf(svgStr2, curConnInd, true);
+	wifiPrintf(svgStr2);
 
 	strcpy(bufStr, "<text x=\"2\" y=\"   \">   </text>\r\n");
 	for(int i=0, j=155, k=(minVal-gap); i<8; i++, j-=20, k+=delta){
@@ -848,11 +873,14 @@ void sendSvgData(char *bufStr/*, uint32_t *vals*/)
 		//bufStr[20+2]=' ';
 		memcpy(&(bufStr[20]), numToStr, sl);
 
-		sendWifiDataToBuf(bufStr, curConnInd, true);
+		//sendWifiDataToBuf(bufStr, curConnInd, true);
+		wifiPrintf(bufStr);
 	}
-	sendWifiDataToBuf("</g>\r\n", curConnInd, true);
+	//sendWifiDataToBuf("</g>\r\n", curConnInd, true);
+	wifiPrintf("</g>\r\n");
 
-	sendWifiDataToBuf("<g style=\"fill: rgb(254,254,127); stroke: black;\">\r\n", curConnInd, true);
+	//sendWifiDataToBuf("<g style=\"fill: rgb(254,254,127); stroke: black;\">\r\n", curConnInd, true);
+	wifiPrintf("<g style=\"fill: rgb(254,254,127); stroke: black;\">\r\n");
 	strcpy(bufStr, "<rect x=\"25 \" y=\"110\" width=\"25\" height=\"350\"/>\r\n");
 	for(int i=0, j=25; i<12; i++, j+=30){
 
@@ -866,11 +894,15 @@ void sendSvgData(char *bufStr/*, uint32_t *vals*/)
 		bufStr[19] = ' ';
 		memcpy(&(bufStr[17]), numToStr, sl);
 
-		sendWifiDataToBuf(bufStr, curConnInd, true);
+		//sendWifiDataToBuf(bufStr, curConnInd, true);
+		wifiPrintf(bufStr);
 	}
-	sendWifiDataToBuf("</g>\r\n", curConnInd, true);
+	//sendWifiDataToBuf("</g>\r\n", curConnInd, true);
 
-	sendWifiDataToBuf("<g font-size=\"10\" font-weight=\"bold\" text-anchor=\"middle\">\r\n", curConnInd, true);
+	//sendWifiDataToBuf("<g font-size=\"10\" font-weight=\"bold\" text-anchor=\"middle\">\r\n", curConnInd, true);
+
+	wifiPrintf("</g>\r\n<g font-size=\"10\" font-weight=\"bold\" text-anchor=\"middle\">\r\n");
+
 	strcpy(bufStr, "<text x=\"37 \" y=\"155\">-11h</text>\r\n");
 	for(int i=0, j=-11, k=37; i<12; i++, j++, k+=30){
 
@@ -885,16 +917,19 @@ void sendSvgData(char *bufStr/*, uint32_t *vals*/)
 		sl = strlen(numToStr);
 		memcpy(&(bufStr[9]), numToStr, sl);
 
-		sendWifiDataToBuf(bufStr, curConnInd, true);
+		//sendWifiDataToBuf(bufStr, curConnInd, true);
+		wifiPrintf(bufStr);
 		//wifiPrintf("<text x=\"37 \" y=\"155\">-11h</text>\r\n");
 	}
-	sendWifiDataToBuf("</g>\r\n", curConnInd, true);
+	//sendWifiDataToBuf("</g>\r\n", curConnInd, true);
 
-	sendWifiDataToBuf("<rect height=\"160\" width=\"400\" style=\"stroke:black; fill:none\"/>\r\n", curConnInd, true);
-	sendWifiDataToBuf("</svg></br></br>\r\n", curConnInd, true);
+	//sendWifiDataToBuf("<rect height=\"160\" width=\"400\" style=\"stroke:black; fill:none\"/>\r\n", curConnInd, true);
+	//sendWifiDataToBuf("</svg></br></br>\r\n", curConnInd, true);
 
-	//blockWaitSendOK(true);
-	blockWaitRecvBytesReport(true);
+	wifiPrintf("</g>\r\n<rect height=\"160\" width=\"400\" style=\"stroke:black; fill:none\"/>\r\n</svg></br></br>\r\n");
+
+	blockWaitSendOK(true);
+	//blockWaitRecvBytesReport(true);
 }
 
 
@@ -985,6 +1020,7 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg, bool debugPrintf)
 				uint32_t startGenPage =  (uint32_t)SysTickCnt;
 
 				sendWifiData(htmlPart1, curConnInd);
+				sendWifiData(htmlPartStartSec2, curConnInd);
 
 				//uint32_t cntVals[12];
 				for(int i=0; i<4; i++){
@@ -994,7 +1030,8 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg, bool debugPrintf)
 //					}
 					sendSvgData(htmlBody/*, cntVals*/);
 				}
-				sendWifiData(htmlPart3, curConnInd);
+				sendWifiData(htmlPartStartSec3, curConnInd);
+				//sendWifiData(htmlPart3, curConnInd);
 
 				if(debugPrintf == true)	debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
 
@@ -1004,11 +1041,16 @@ void parseCommand(TCmdType &cmdType, char *wifiMsg, bool debugPrintf)
 
 				if(debugPrintf == true) debugPrintf("!!! htmlBody SEND_OK detected!!!\r\n");
 
-				sendWifiData(htmlPart2, curConnInd);
+				sendWifiData("<center>Page generate in ", curConnInd);
 
 				itoa(SysTickCnt - startGenPage, htmlBody, 10);
-				debugPrintf(htmlBody);
-				debugPrintf(" for page generate\r\n");
+				//debugPrintf(htmlBody);
+				//debugPrintf(" for page generate\r\n");
+				sendWifiData(htmlBody, curConnInd);
+				sendWifiData(" ms</center>", curConnInd);
+
+				sendWifiData(htmlPart2, curConnInd);
+
 
 				if(debugPrintf == true) debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
 

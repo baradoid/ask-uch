@@ -51,3 +51,13 @@ void scanWiFiAp();
 //#define SYSTICK_CLKSOURCE           2                                          /* Clocksource has the offset 2 in SysTick Control and Status Register   */
 //#define SYSTICK_MAXCOUNT       ((1<<24) -1)                                    /* SysTick MaxCount */
 //uint32_t SysTick_Config(uint32_t ticks);
+
+
+typedef struct {
+	uint8_t secureType;
+	int8_t	rssi;
+	char name[35];
+} TWifiAp;
+
+#define WIFI_APLISTMAX 5
+extern TWifiAp wifiApList[WIFI_APLISTMAX];

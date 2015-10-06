@@ -19,6 +19,7 @@
 #include "utils.h"
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define SysTick_VALUE (SystemCoreClock/1000 - 1)
 
@@ -47,6 +48,8 @@ int main(void)
 	/* Before using the ring buffers, initialize them using the ring
 	   buffer init function */
 	RingBuffer_Init(&rxring, rxbuff, 1, UART_RB_SIZE);
+
+	memset(wifiApList, 0, sizeof(wifiApList));
 
 	debugPrintf("starting main\r\n");
     // Force the counter to be placed into memory
