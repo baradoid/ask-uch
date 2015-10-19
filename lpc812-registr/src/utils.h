@@ -1,13 +1,8 @@
 #pragma once
 
-
 #include "chip.h"
 
-
-void uartPrintf(LPC_USART_T *pUART, const char *str);
-
-#define debugPrintf(b) uartPrintf(LPC_USART0, b)
-#define wifiPrintf(b) uartPrintf(LPC_USART1, b)
+void delayMs(uint16_t msec);
 
 #define ASSERT(x) if((x) == 0){debugPrintf("ASSERTION!!\r\n"); while(1);}
 
@@ -40,9 +35,30 @@ typedef enum {
 	UNKNWON
 } TCmdType;
 
+typedef enum{
+	GET_ROOT,
+	GET_FAVICON,
+	POST
+} THtmlReqType;
+
+
+
+typedef struct {
+	TCmdType type;
+	union{
+		struct{
+			uint8_t curConnInd;
+			THtmlReqType htmlReqType;
+		};
+	};
+
+} TCmd;
+
+
+#define INFINITY -1
 //void parseCommand(TCmdType &cmdType, char *wifiMsg);
-void parseCommand(TCmdType &cmdType, char *wifiMsg, bool debugPrintf = false);
-void processMsg(TCmdType cmdType, uint16_t wifiMsgLen);
+TCmd getNextWifiCmd(int16_t to_msec, bool debugPrintf);
+void processMsg();
 void scanWiFiAp();
 
 /* SysTick constants */
@@ -59,5 +75,13 @@ typedef struct {
 	char name[35];
 } TWifiAp;
 
-#define WIFI_APLISTMAX 5
+#define WIFI_APLISTMAX 10
 extern TWifiAp wifiApList[WIFI_APLISTMAX];
+
+void waitForRespOK();
+void waitForRespOKorRespError();
+
+void resetApList();
+
+TCmdType blockWaitCmd(bool debugPrintf);
+

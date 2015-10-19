@@ -21,61 +21,184 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "uartUtils.h"
+
 #define SysTick_VALUE (SystemCoreClock/1000 - 1)
 
 
 void prvSetupHardware();
 
-#define UART_RB_SIZE 1024
+#define UART_RB_SIZE 128
 /* Transmit and receive ring buffers */
-RINGBUFF_T rxring;
+//RINGBUFF_T rxring;
 /* Transmit and receive buffers */
-__NOINIT_DEF uint8_t rxbuff[UART_RB_SIZE];
+//__NOINIT_DEF uint8_t rxbuff[UART_RB_SIZE];
 
 void vUartTask ();
 
 #define RINGBUF_FULL_BITNUM 0
 #define UARTTMPBUF_FULL_BITNUM 1
 uint8_t errword;
-uint64_t SysTickCnt = 0;
 
 int main(void)
 {
-	uint64_t cnt_15s=15000, cnt_1ms=0, cnt_10ms=0, cnt_100ms=0;
+	//uint64_t cnt_15s=15000, cnt_1ms=0, cnt_10ms=0, cnt_100ms=0;
 	prvSetupHardware();
+
+	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT, 0, 17);
+	Chip_GPIO_SetPinState(LPC_GPIO_PORT, 0, 17, false);
+
 	SysTick_Config(SysTick_VALUE);
 
+	//while(SysTickCnt <2000) ;
 	/* Before using the ring buffers, initialize them using the ring
 	   buffer init function */
-	RingBuffer_Init(&rxring, rxbuff, 1, UART_RB_SIZE);
+	//RingBuffer_Init(&rxring, rxbuff, 1, UART_RB_SIZE);
 
 	memset(wifiApList, 0, sizeof(wifiApList));
 
+	//while(1) ;
 	debugPrintf("starting main\r\n");
-    // Force the counter to be placed into memory
-    volatile static int i = 0 ;
-    // Enter an infinite loop, just incrementing a counter
-    while(1) {
-    	vUartTask();
-    	//debugPrintf("s\r\n");
-    	if(errword){
-    		debugPrintf("err ");
-    		if(errword&(1<<RINGBUF_FULL_BITNUM))
-    			debugPrintf("RINGBUF_FULL!");
-    		if(errword&(1<<UARTTMPBUF_FULL_BITNUM))
-    		    debugPrintf("UARTTMPBUF_FULL!");
-    		debugPrintf("\r\n");
-    		while(1);
-    	}
 
-        if( SysTickCnt >= cnt_100ms ){
-            cnt_100ms = SysTickCnt+100;
-        }
-        if( SysTickCnt >= cnt_15s ){
-        	cnt_15s = SysTickCnt+15000;
-        	//debugPrintf("time to rescan wifi\r\n");
-        	//scanWiFiAp();
-        }
+
+	debugPrintf("core clock ");
+	char numToStr[10];
+	itoa(SystemCoreClock, &(numToStr[0]), 10);
+	debugPrintf(numToStr);
+	debugPrintf(" Hz\r\n");
+
+	/*debugPrintf("stack top 0x");
+	extern void _vStackTop;
+	char numToStr[10];
+	itoa(_vStackTop, &(numToStr[0]), 10);
+	debugPrintf(numToStr);
+	debugPrintf(" \r\n");*/
+
+	//readUUU("ready\r\n");
+	while(1){
+		waitWiFiMsg();
+		//debugPrintf(" ->");
+		//debugPrintf(uart1Buffer);
+		if(strcmp(uart1Buffer, "ready\r\n") == 0){
+			break;
+		}
+		enableWiFiMsg();
+	}
+
+	debugPrintf("ready detected\r\n");
+
+	Chip_SWM_MovablePinAssign(SWM_U1_CTS_I, 17);
+
+	while(1){
+		wifiPrintf("AT+UART_CUR=115200,8,1,0,3\r\n");
+		waitWiFiMsg();
+		debugPrintf(" ->");
+		debugPrintf(uart1Buffer);
+		if(strcmp(uart1Buffer, "OK\r\n") == 0){
+			break;
+		}
+		enableWiFiMsg();
+	}
+	//wifiPrintf("AT+UART_CUR=115200,8,1,0,3\r\n");
+	waitForRespOK();
+
+	debugPrintf("send ate0\r\n");
+	wifiPrintf("ATE0\r\n");
+	waitForRespOK();
+
+	debugPrintf("wait for wifi state\r\n");
+	while(1){
+		TCmdType cmdType = getNextWifiCmd(INFINITY, true).type;
+		if( (cmdType == wifi_gotip) || (cmdType == wifi_discon))
+			break;
+	}
+
+	debugPrintf("delay\r\n");
+	//delayMs(1500);
+
+	//debugPrintf("turn off AT+CWAUTOCON\r\n");
+	//wifiPrintf("AT+CWAUTOCONN=1\r\n");
+	//waitForRespOK();
+
+
+	//debugPrintf("wait for ok\r\n");
+	//waitForRespOK();
+
+	debugPrintf("AT+CIPMUX=1\r\n");
+	wifiPrintf("AT+CIPMUX=1\r\n");
+	waitForRespOK();
+
+	debugPrintf("AT+CIPSERVER=1\r\n");
+	wifiPrintf("AT+CIPSERVER=1,80\r\n");
+	waitForRespOK();
+
+	//wifiPrintf("AT+CIFSR\r\n");
+	//readLLL("OK\r\n");
+
+	//wifiPrintf("AT+CWMODE_DEF=3\r\n");
+	//readLLL("OK\r\n");
+
+	//wifiPrintf("AT+CWAUTOCONN?\r\n");
+	//readLLL("OK\r\n");
+
+	//wifiPrintf("AT+CWDHCP_CUR?\r\n");
+	//readLLL("OK\r\n");
+
+//	debugPrintf("AT+CWLAP=1\r\n");
+//	wifiPrintf("AT+CWLAP\r\n");
+//	waitForRespOK();
+
+//	debugPrintf("Wait AT+CWLAP resp OK! \r\n");
+
+	debugPrintf(" trying to connect\r\n");
+
+	//wifiPrintf("AT+CWQAP\r\n");
+	//waitForRespOK();
+
+	//debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+	//wifiPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+	//readLLL("OK\r\n");
+
+	wifiPrintf("AT+CIFSR\r\n");
+	waitForRespOK();
+
+	debugPrintf("init ok\r\n");
+
+	while(1) {
+		TCmd cmd = getNextWifiCmd(INFINITY, true);
+//		waitWiFiMsg();
+//		uint16_t msgLen = getUartIrqMsgLength();
+//		memcpy(uart1ProcBuffer, uart1Buffer, BUF_LEN);
+//		enableWiFiMsg();
+//
+//		debugPrintf("got msg! -> ");
+//		debugPrintflen(uart1ProcBuffer, msgLen);
+//
+//		TCmdType cmdType = UNKNWON;
+//		parseCommand(cmdType, uart1ProcBuffer, true);
+
+		//processMsg();
+
+    	//vUartTask();
+    	//debugPrintf("s\r\n");
+//    	if(errword){
+//    		debugPrintf("err ");
+//    		if(errword&(1<<RINGBUF_FULL_BITNUM))
+//    			debugPrintf("RINGBUF_FULL!");
+//    		if(errword&(1<<UARTTMPBUF_FULL_BITNUM))
+//    		    debugPrintf("UARTTMPBUF_FULL!");
+//    		debugPrintf("\r\n");
+//    		while(1);
+//    	}
+
+//        if( SysTickCnt >= cnt_100ms ){
+//            cnt_100ms = SysTickCnt+100;
+//        }
+//        if( SysTickCnt >= cnt_15s ){
+//        	cnt_15s = SysTickCnt+15000;
+//        	//debugPrintf("time to rescan wifi\r\n");
+//        	//scanWiFiAp();
+//        }
         //	char iToStr[10];
         //	if(SysTickCnt > 1000){
         //		SysTickCnt = 0;
@@ -89,66 +212,14 @@ int main(void)
         //			debugPrintf("\r\n");
         //		}
         //	}
-        i++ ;
     }
     return 0 ;
 }
 
-#define TEMPRECVBUF_SIZE 256
-extern int16_t msgLength;
+//#define TEMPRECVBUF_SIZE 256
+//extern int16_t msgLength;
 
-char tempRecvBuf[TEMPRECVBUF_SIZE];
-
-void vUartTask ()
-{
-	static uint8_t tempRecvBufInd = 0;
-
-	while(RingBuffer_Pop(&rxring, &(tempRecvBuf[tempRecvBufInd]))){
-		if( (tempRecvBuf[tempRecvBufInd] == '\n') ||
-			((tempRecvBuf[0] == '>') && (tempRecvBufInd==1))
-		  )
-		{
-			tempRecvBufInd++;
-			tempRecvBuf[tempRecvBufInd] = '\0';
-
-			if(tempRecvBufInd >= TEMPRECVBUF_SIZE)
-				errword |= (1<<UARTTMPBUF_FULL_BITNUM);
-			//tempRecvBufInd++;
-			//uint16_t tempRecvBufLen = sizeof(tempRecvBuf);
-			Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
-			TCmdType cmdType = UNKNWON;
-			parseCommand(cmdType, tempRecvBuf);
-			processMsg(cmdType, tempRecvBufInd);
-			tempRecvBufInd = 0 ;
-		}
-		else{
-			if((msgLength > 0) && (tempRecvBufInd == (msgLength-1))){
-				tempRecvBufInd++;
-				tempRecvBuf[tempRecvBufInd] = '\0';
-				debugPrintf("!!! affected !!! \r\n");
-				Chip_UART_SendBlocking(LPC_USART0, tempRecvBuf, tempRecvBufInd);
-				TCmdType cmdType = TEXT;
-				processMsg(cmdType, tempRecvBufInd);
-				tempRecvBufInd = 0 ;
-			}
-			else
-				tempRecvBufInd++;
-		}
-	}
-}
-
-//void LPC_UARTHNDLR(void)
-extern "C" void UART1_IRQHandler( void )
-{
-	/* New data will be ignored if data not popped in time */
-	while ((Chip_UART_GetStatus(LPC_USART1) & UART_STAT_RXRDY) != 0) {
-		uint8_t ch = Chip_UART_ReadByte(LPC_USART1);
-		if(RingBuffer_Insert(&rxring, &ch) == 0)
-			errword |= (1<<RINGBUF_FULL_BITNUM);
-
-	}
-}
-
+volatile uint64_t SysTickCnt = 0;
 extern "C" void SysTick_Handler(void)
 {
 	SysTickCnt++;
