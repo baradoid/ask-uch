@@ -56,9 +56,12 @@
 							<tool id="com.crt.advproject.ar.lib.debug.1562237810" name="MCU Archiver" superClass="com.crt.advproject.ar.lib.debug"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.crt.advproject.config.lib.debug.1726912748.495017549" name="ring_buffer.c" rcbsApplicability="disable" resourcePath="src/ring_buffer.c" toolsToInvoke="com.crt.advproject.gcc.lib.debug.1865899320.1954331174">
+						<tool id="com.crt.advproject.gcc.lib.debug.1865899320.1954331174" name="MCU C Compiler" superClass="com.crt.advproject.gcc.lib.debug.1865899320"/>
+					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="inc"/>
-						<entry excluding="acmp_8xx.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="ring_buffer.c|i2c_common_8xx.c|i2cm_8xx.c|i2cs_8xx.c|spi_8xx.c|acmp_8xx.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -179,5 +182,12 @@
 &lt;/infoList&gt;&#13;
 &lt;/TargetConfig&gt;</projectStorage>
 	</storageModule>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/lpc_chip_8xx"/>
+		</configuration>
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/lpc_chip_8xx"/>
+		</configuration>
+	</storageModule>
 </cproject>

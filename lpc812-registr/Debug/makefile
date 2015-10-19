@@ -44,7 +44,7 @@ all: lpc812-registr.axf
 lpc812-registr.axf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU C++ Linker'
-	arm-none-eabi-c++ -nostdlib -L"C:\Users\Dmitry\Documents\LPCXpresso_7.8.0_426\askue\lpc812-workspace\lpc_chip_8xx\Debug" -Xlinker -Map="lpc812-registr.map" -Xlinker --gc-sections -mcpu=cortex-m0 -mthumb -T "lpc812-registr_Debug.ld" -o "lpc812-registr.axf" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-none-eabi-c++ -nostdlib -L"D:\dev\ask\lpc812-workspace\lpc_chip_8xx\Debug" -Xlinker -Map="lpc812-registr.map" -Xlinker --gc-sections -mcpu=cortex-m0plus -mthumb -T "lpc812-registr_Debug.ld" -o "lpc812-registr.axf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build

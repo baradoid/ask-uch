@@ -108,7 +108,7 @@ void prvSetupHardware(void)
 	   MSEL = 1 (this is pre-decremented), PSEL = 2 (for P = 4)
 	   FCLKOUT = FCLKIN * (MSEL + 1) = 12MHz * 2 = 24MHz
 	   FCCO = FCLKOUT * 2 * P = 24MHz * 2 * 4 = 192MHz (within FCCO range) */
-	Chip_Clock_SetupSystemPLL(5, 1);
+	Chip_Clock_SetupSystemPLL(4, 1);
 
 	/* Turn on the PLL by clearing the power down bit */
 	Chip_SYSCTL_PowerUp(SYSCTL_SLPWAKE_SYSPLL_PD);
@@ -483,7 +483,7 @@ void parseCWLAP(char *str)
 		switch(i){
 		case 2:
 			//pch[strlen(pch)]='\0';
-			memcpy(&(carWifiAap->name[0]), pch+1, strlen(pch)-2);
+			memcpy(&(carWifiAap->name[0]), pch+1, MIN(10, strlen(pch)-2));
 			//strcpy(&(carWifiAap->name[0]), pch+1);
 			break;
 		case 3:
@@ -1484,7 +1484,7 @@ void commonInit()
 // return (0);                                                                            /* Function successful */
 //}
 
-void vUartTask ()
+void vHttpServerTask ()
 {
 	char htmlBody[1004];
 
@@ -1500,8 +1500,6 @@ void vUartTask ()
 		}
 		else{
 			debugPrintf("!!! not ROOT. send 404 !!!\r\n");
-
-
 		}
 	}
 	return;

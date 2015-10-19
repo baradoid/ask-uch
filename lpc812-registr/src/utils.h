@@ -8,7 +8,7 @@ void delayMs(uint16_t msec);
 
 #define MEMCMPx(a, b) memcmp(a, b, strlen(b)-1)
 
-void vUartTask ();
+void vHttpServerTask ();
 
 typedef enum {
 	ready,
@@ -72,7 +72,7 @@ void scanWiFiAp();
 typedef struct {
 	uint8_t secureType;
 	int8_t	rssi;
-	char name[35];
+	char name[10];
 } TWifiAp;
 
 #define WIFI_APLISTMAX 10

@@ -28,7 +28,7 @@
 
 void prvSetupHardware();
 
-#define UART_RB_SIZE 128
+//#define UART_RB_SIZE 128
 /* Transmit and receive ring buffers */
 //RINGBUFF_T rxring;
 /* Transmit and receive buffers */
@@ -62,8 +62,9 @@ int main(void)
 
 
 	debugPrintf("core clock ");
-	char numToStr[10];
+	char numToStr[15];
 	itoa(SystemCoreClock, &(numToStr[0]), 10);
+	debugPrintf("core clock ");
 	debugPrintf(numToStr);
 	debugPrintf(" Hz\r\n");
 
@@ -109,11 +110,19 @@ int main(void)
 	debugPrintf("wait for wifi state\r\n");
 	while(1){
 		TCmdType cmdType = getNextWifiCmd(INFINITY, true).type;
-		if( (cmdType == wifi_gotip) || (cmdType == wifi_discon))
+		if( cmdType == wifi_gotip)
 			break;
+		if(cmdType == wifi_discon){
+			debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
+			wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
+			//debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+			//wifiPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+			waitForRespOK();
+			break;
+		}
 	}
 
-	debugPrintf("delay\r\n");
+	//debugPrintf("delay\r\n");
 	//delayMs(1500);
 
 	//debugPrintf("turn off AT+CWAUTOCON\r\n");
@@ -165,7 +174,8 @@ int main(void)
 	debugPrintf("init ok\r\n");
 
 	while(1) {
-		TCmd cmd = getNextWifiCmd(INFINITY, true);
+		vHttpServerTask ();
+//		TCmd cmd = getNextWifiCmd(INFINITY, true);
 //		waitWiFiMsg();
 //		uint16_t msgLen = getUartIrqMsgLength();
 //		memcpy(uart1ProcBuffer, uart1Buffer, BUF_LEN);
@@ -223,4 +233,36 @@ volatile uint64_t SysTickCnt = 0;
 extern "C" void SysTick_Handler(void)
 {
 	SysTickCnt++;
+}
+
+extern "C" void NMI_Handler(void)
+{
+	debugPrintf("NMI_Handler\r\n");
+    while(1)
+    {
+    }
+}
+
+extern "C" void HardFault_Handler(void)
+{
+	debugPrintf("HardFault_Handler\r\n");
+    while(1)
+    {
+    }
+}
+
+extern "C" void SVC_Handler(void)
+{
+	debugPrintf("SVC_Handler\r\n");
+    while(1)
+    {
+    }
+}
+
+extern "C" void PendSV_Handler(void)
+{
+	debugPrintf("PendSV_Handler\r\n");
+    while(1)
+    {
+    }
 }
