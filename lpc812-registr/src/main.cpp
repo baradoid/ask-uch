@@ -122,6 +122,32 @@ int main(void)
 		}
 	}
 
+//	debugPrintf("AT+UART_CUR=921600,8,1,0,3\r\n");
+//	wifiPrintf("AT+UART_CUR=921600,8,1,0,3\r\n");
+//	waitForRespOK();
+//
+//
+//	delayMs(1000);
+//	Chip_Clock_SetUSARTNBaseClockRate((921600 * 16), true);
+//	Chip_UART_SetBaud(LPC_USART0, 921600);
+//	Chip_UART_SetBaud(LPC_USART1, 921600);
+//
+//	debugPrintf("AT\r\n");
+//	while(1){
+//		wifiPrintf("AT\r\n");
+//		waitWiFiMsg();
+//		debugPrintf(" ->");
+//		debugPrintf(uart1Buffer);
+//		if(strcmp(uart1Buffer, "OK\r\n") == 0){
+//			break;
+//		}
+//		enableWiFiMsg();
+//	}
+//
+
+
+	//waitForRespOK();
+
 	//debugPrintf("delay\r\n");
 	//delayMs(1500);
 

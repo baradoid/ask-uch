@@ -161,7 +161,7 @@ extern "C" void UART1_IRQHandler( void )
 	while ((Chip_UART_GetStatus(LPC_USART1) & UART_STAT_RXRDY) != 0) {
 		char ch = Chip_UART_ReadByte(LPC_USART1);
 		uart1Buffer[recvBufCurInd++] = ch;
-		if(ch == '\n'){
+		if( (ch == '\n') || ((uart1Buffer[0] == '>') && (recvBufCurInd==2)) ){
 			//debugPrintf("d");
 			uart1Buffer[recvBufCurInd] = '\0';
 			uart1MsgLen = recvBufCurInd;
