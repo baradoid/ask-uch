@@ -200,6 +200,25 @@ typedef enum {
 } TProcState;
 
 
+#include <string.h>
+#include "esp8266.h"
+void setwifiBaudRate(uint32_t baudrate)
+{
+	char numToStr[10], reqStr[] = "AT+UART_CUR=921600,8,1,0,3\r\n";
+	itoa(baudrate, numToStr, 10);
+
+	memcpy(&(reqStr[12]), numToStr, strlen(numToStr));
+
+	debugPrintf(reqStr);
+	wifiPrintf(reqStr);
+	waitForRespOK();
+
+	Chip_Clock_SetUSARTNBaseClockRate((921600 * 16), true);
+	Chip_UART_SetBaud(LPC_USART0, baudrate);
+	Chip_UART_SetBaud(LPC_USART1, baudrate);
+}
+
+
 //uint8_t curConnInd = 0;
 
 //void waitForRespText()

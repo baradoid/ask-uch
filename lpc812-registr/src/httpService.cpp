@@ -177,10 +177,10 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 	static uint8_t sendBufIdx = 1;
 
 	char numToStr[5];
-	startSendWifiDataWithLen(1908, curConnInd, sendBufIdx++);
+	//startSendWifiDataWithLen(1908, curConnInd, sendBufIdx++);
 
-	//sendWifiDataToBuf(svgStr1, curConnInd, true);
-	wifiPrintf(svgStr1);
+	sendWifiDataToBuf(svgStr1, curConnInd);
+	//wifiPrintf(svgStr1);
 
 	strcpy(bufStr, "<line x1=\"0\" y1=\"   \" x2=\"400\" y2=\"   \"/>\r\n");
 	for(int i=0, j=20; i<7; i++, j+=20){
@@ -188,12 +188,12 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 		uint8_t sl = strlen(numToStr);
 		memcpy(&(bufStr[17]), numToStr, sl);
 		memcpy(&(bufStr[35]), numToStr, sl);
-		//sendWifiDataToBuf(bufStr, curConnInd, true);
-		wifiPrintf(bufStr);
+		sendWifiDataToBuf(bufStr, curConnInd);
+		//wifiPrintf(bufStr);
 	}
 
-	//sendWifiDataToBuf(svgStr2, curConnInd, true);
-	wifiPrintf(svgStr2);
+	sendWifiDataToBuf(svgStr2, curConnInd);
+	//wifiPrintf(svgStr2);
 
 	strcpy(bufStr, "<text x=\"2\" y=\"   \">   </text>\r\n");
 	for(int i=0, j=155, k=(minVal-gap); i<8; i++, j-=20, k+=delta){
@@ -207,14 +207,14 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 		//bufStr[20+2]=' ';
 		memcpy(&(bufStr[20]), numToStr, sl);
 
-		//sendWifiDataToBuf(bufStr, curConnInd, true);
-		wifiPrintf(bufStr);
+		sendWifiDataToBuf(bufStr, curConnInd);
+		//wifiPrintf(bufStr);
 	}
-	//sendWifiDataToBuf("</g>\r\n", curConnInd, true);
-	wifiPrintf("</g>\r\n");
+	sendWifiDataToBuf("</g>\r\n", curConnInd);
+	//wifiPrintf("</g>\r\n");
 
-	//sendWifiDataToBuf("<g style=\"fill: rgb(254,254,127); stroke: black;\">\r\n", curConnInd, true);
-	wifiPrintf("<g style=\"fill: rgb(254,254,127); stroke: black;\">\r\n");
+	sendWifiDataToBuf("<g style=\"fill: rgb(254,254,127); stroke: black;\">\r\n", curConnInd);
+	//wifiPrintf("<g style=\"fill: rgb(254,254,127); stroke: black;\">\r\n");
 	strcpy(bufStr, "<rect x=\"25 \" y=\"110\" width=\"25\" height=\"350\"/>\r\n");
 	for(int i=0, j=25; i<12; i++, j+=30){
 
@@ -228,14 +228,14 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 		bufStr[19] = ' ';
 		memcpy(&(bufStr[17]), numToStr, sl);
 
-		//sendWifiDataToBuf(bufStr, curConnInd, true);
-		wifiPrintf(bufStr);
+		sendWifiDataToBuf(bufStr, curConnInd);
+		//wifiPrintf(bufStr);
 	}
 	//sendWifiDataToBuf("</g>\r\n", curConnInd, true);
 
-	//sendWifiDataToBuf("<g font-size=\"10\" font-weight=\"bold\" text-anchor=\"middle\">\r\n", curConnInd, true);
+	sendWifiDataToBuf("</g>\r\n<g font-size=\"10\" font-weight=\"bold\" text-anchor=\"middle\">\r\n", curConnInd);
 
-	wifiPrintf("</g>\r\n<g font-size=\"10\" font-weight=\"bold\" text-anchor=\"middle\">\r\n");
+	//wifiPrintf("</g>\r\n<g font-size=\"10\" font-weight=\"bold\" text-anchor=\"middle\">\r\n");
 
 	strcpy(bufStr, "<text x=\"37 \" y=\"155\">-11h</text>\r\n");
 	for(int i=0, j=-11, k=37; i<12; i++, j++, k+=30){
@@ -251,8 +251,8 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 		sl = strlen(numToStr);
 		memcpy(&(bufStr[9]), numToStr, sl);
 
-		//sendWifiDataToBuf(bufStr, curConnInd, true);
-		wifiPrintf(bufStr);
+		sendWifiDataToBuf(bufStr, curConnInd);
+		//wifiPrintf(bufStr);
 		//wifiPrintf("<text x=\"37 \" y=\"155\">-11h</text>\r\n");
 	}
 	//sendWifiDataToBuf("</g>\r\n", curConnInd, true);
@@ -261,8 +261,10 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 	//sendWifiDataToBuf("</svg></br></br>\r\n", curConnInd, true);
 
 	wifiPrintf("</g>\r\n<rect height=\"160\" width=\"400\" style=\"stroke:black; fill:none\"/>\r\n</svg></br></br>\r\n");
+	sendWifiDataToBuf("</g>\r\n<rect height=\"160\" width=\"400\" style=\"stroke:black; fill:none\"/>\r\n</svg></br></br>\r\n", curConnInd);
+	//sendWifiDataToBuf("</svg></br></br>\r\n", curConnInd, true);
 
-	blockWaitSendOK();
+	//blockWaitSendOK();
 	//blockWaitRecvBytesReport(true);
 }
 
@@ -274,21 +276,25 @@ __RODATA(text) char statusText3[] = "</br></br>Uptime: ";
 
 void vHttpServerTask ()
 {
-	char htmlBody[1004];
+	char htmlBody[1004], recvBuf[BUF_LEN];
 
 	TCmd cmd;
-	getNextWifiCmd(cmd, INFINITY);
+	getNextWifiCmdExtBuf(recvBuf, cmd, INFINITY);
 
-	debugPrintf("start process \r\n");
+	debugPrintf("httpTask->");
+	debugPrintf(recvBuf);
+
+	//debugPrintf("start process \r\n");
 
 	if(cmd.type == IPD){
-		debugPrintf("!!! IPD !!!\r\n");
+		//debugPrintf("!!! IPD !!!\r\n");
 		if(cmd.htmlReqType == GET_ROOT){
+			debugPrintf("httpTask->");
 			debugPrintf("!!! GET_ROOT !!!\r\n");
 			extern uint64_t SysTickCnt;
 			uint32_t startGenPage =  (uint32_t)SysTickCnt;
 
-			sendWifiData(htmlPart1, cmd.curConnInd);
+			sendWifiDataToBuf(htmlPart1, cmd.curConnInd);
 			strcpy(htmlBody, statusText1);
 			strcat(htmlBody, APIP);
 			strcat(htmlBody, statusText2);
@@ -311,10 +317,11 @@ void vHttpServerTask ()
 			itoa(SysTickCnt/1000, numToStr, 10);
 			strcat(htmlBody, numToStr);
 			strcat(htmlBody, "s ");
-			sendWifiData(htmlBody, cmd.curConnInd);
+			sendWifiDataToBuf(htmlBody, cmd.curConnInd);
 
-			sendWifiData(htmlPartStartSec2, cmd.curConnInd);
-			debugPrintf("!!! GET_ROOT !!!\r\n");
+			sendWifiDataToBuf(htmlPartStartSec2, cmd.curConnInd);
+
+			debugPrintf("!!! start send SVG!!!\r\n");
 			//uint32_t cntVals[12];
 			for(int i=0; i<4; i++){
 	//					cntVals[0] = rand() % 100;
@@ -323,7 +330,8 @@ void vHttpServerTask ()
 	//					}
 				sendSvgData(htmlBody, cmd.curConnInd/*, cntVals*/);
 			}
-			sendWifiData(htmlPartStartSec3, cmd.curConnInd);
+			debugPrintf("!!! stop send SVG!!!\r\n");
+			sendWifiDataToBuf(htmlPartStartSec3, cmd.curConnInd);
 			//sendWifiData(htmlPart3, curConnInd);
 
 #ifdef DEBUGPRINTF
@@ -332,36 +340,34 @@ void vHttpServerTask ()
 
 			prepareHtmlData(htmlBody);
 
-			sendWifiData(htmlBody, cmd.curConnInd);
+			sendWifiDataToBuf(htmlBody, cmd.curConnInd);
 
 #ifdef DEBUGPRINTF
 			debugPrintf("!!! htmlBody SEND_OK detected!!!\r\n");
 #endif
 
-			sendWifiData("<center>Page generate in ", cmd.curConnInd);
+			sendWifiDataToBuf("<center>Page generate in ", cmd.curConnInd);
 
 			itoa(SysTickCnt - startGenPage, htmlBody, 10);
 			//debugPrintf(htmlBody);
 			//debugPrintf(" for page generate\r\n");
-			sendWifiData(htmlBody, cmd.curConnInd);
-			sendWifiData(" ms</center>", cmd.curConnInd);
+			sendWifiDataToBuf(htmlBody, cmd.curConnInd);
+			sendWifiDataToBuf(" ms</center>", cmd.curConnInd);
 
-			sendWifiData(htmlPart2, cmd.curConnInd);
+			sendWifiDataToBuf(htmlPart2, cmd.curConnInd);
 
 
 #ifdef DEBUGPRINTF
 			debugPrintf("!!! htmlClose SEND_OK detected!!!\r\n");
 #endif
 
-			sendCipClose(cmd.curConnInd);
+			//sendCipClose(cmd.curConnInd);
 
-			waitForRespOK();
+			//waitForRespOK();
 		}
 		else{
-			debugPrintf("!!! not ROOT. send 404 !!!\r\n");
-#ifdef DEBUGPRINTF
+			debugPrintf("httpTask->");
 			debugPrintf("not ROOT. send 404\r\n");
-#endif
 			sendWifiData(html404, cmd.curConnInd);
 	//				wifiPrintf("AT+CIPSEND=");
 	//				debugPrintf("AT+CIPSEND=");

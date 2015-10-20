@@ -128,13 +128,7 @@ int main(void)
 		}
 	}
 
-/*	debugPrintf("AT+UART_CUR=921600,8,1,0,3\r\n");
-	wifiPrintf("AT+UART_CUR=921600,8,1,0,3\r\n");
-	waitForRespOK();
-
-	Chip_Clock_SetUSARTNBaseClockRate((921600 * 16), true);
-	Chip_UART_SetBaud(LPC_USART0, 921600);
-	Chip_UART_SetBaud(LPC_USART1, 921600);*/
+	//setwifiBaudRate(921600);
 
 	//waitForRespOK();
 

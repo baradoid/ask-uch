@@ -4,6 +4,8 @@
 #include "utils.h"
 #include "httpService.h"
 
+//#define DEBUGPRINTF
+
 TWifiAp wifiApList[WIFI_APLISTMAX];
 
 char APIP[20], STAPIP[20];
@@ -71,7 +73,7 @@ void scanWiFiAp()
 void parseIPD(char *str, TCmd &cmd, int16_t *msgLen)
 {
 	char *pch;
-	char numToStr[10];
+	//char numToStr[10];
 	char *strHttpReq = NULL;
 	uint8_t i;
 
@@ -123,10 +125,15 @@ void parseIPD(char *str, TCmd &cmd, int16_t *msgLen)
 }
 
 
-TCmd getNextWifiCmd(TCmd &cmd, int16_t to_msec)
+void getNextWifiCmd(TCmd &cmd, int16_t to_msec)
+{
+	char recvBuf[BUF_LEN];
+	getNextWifiCmdExtBuf(recvBuf, cmd, to_msec);
+}
+
+void getNextWifiCmdExtBuf(char recvBuf[], TCmd &cmd, int16_t to_msec)
 {
 	cmd.type = UNKNWON;
-	char recvBuf[BUF_LEN];
 
 	uint16_t msgLen = recvWifiMsgTO(recvBuf, to_msec);
 #ifdef DEBUGPRINTF
@@ -140,7 +147,7 @@ TCmd getNextWifiCmd(TCmd &cmd, int16_t to_msec)
 	if(msgLen != -1){
 		if(recvBuf[0] == '+'){
 			if(MEMCMPx(recvBuf, "+IPD") == 0){
-				char numToStr[10];
+				//char numToStr[10];
 				debugPrintf("!!! +IPD !!!\r\n");
 				int16_t msgLength = 0;
 				parseIPD(recvBuf, cmd, &msgLength);
@@ -229,7 +236,6 @@ TCmd getNextWifiCmd(TCmd &cmd, int16_t to_msec)
 	//			debugPrintf("!!! unknown cmd!!! \r\n");
 		}
 	}
-	return cmd;
 }
 
 
@@ -285,7 +291,9 @@ void blockWaitRecvBytesReport()
 		if(cmd.type == busy_s)
 			debugPrintf("busy!!\r\n");
 		if(cmd.type == recv_bytes_report){
+#ifdef DEBUGPRINTF
 			debugPrintf("recv_bytes_report\r\n");
+#endif
 			break;
 		}
 	}
@@ -428,9 +436,13 @@ void sendWifiDataToBuf(char *str, uint8_t connId)
 #endif
 
 	blockWaitForReadyToSend();
+#ifdef DEBUGPRINTF
 	debugPrintf("sending data\r\n");
+#endif
 	wifiPrintf(str);
+#ifdef DEBUGPRINTF
 	debugPrintf("data send ok\r\n");
+#endif
 	//blockWaitSendOK();
 	blockWaitRecvBytesReport();
 }
