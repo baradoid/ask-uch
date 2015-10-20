@@ -1,4 +1,5 @@
 #pragma once
+#include "chip.h"
 
 void uartPrintf(LPC_USART_T *pUART, const char *str);
 

@@ -16,12 +16,17 @@
 //#include "chip.h"
 #include <cr_section_macros.h>
 
-#include "utils.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "uartUtils.h"
+
+#include "esp8266.h"
+#include "httpService.h"
+
+#include "utils.h"
 
 #define SysTick_VALUE (SystemCoreClock/1000 - 1)
 
@@ -108,11 +113,12 @@ int main(void)
 	waitForRespOK();
 
 	debugPrintf("wait for wifi state\r\n");
+	TCmd cmd;
 	while(1){
-		TCmdType cmdType = getNextWifiCmd(INFINITY, true).type;
-		if( cmdType == wifi_gotip)
+		getNextWifiCmd(cmd, INFINITY);
+		if( cmd.type == wifi_gotip)
 			break;
-		if(cmdType == wifi_discon){
+		if(cmd.type == wifi_discon){
 			debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
 			wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
 			//debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
@@ -122,29 +128,13 @@ int main(void)
 		}
 	}
 
-//	debugPrintf("AT+UART_CUR=921600,8,1,0,3\r\n");
-//	wifiPrintf("AT+UART_CUR=921600,8,1,0,3\r\n");
-//	waitForRespOK();
-//
-//
-//	delayMs(1000);
-//	Chip_Clock_SetUSARTNBaseClockRate((921600 * 16), true);
-//	Chip_UART_SetBaud(LPC_USART0, 921600);
-//	Chip_UART_SetBaud(LPC_USART1, 921600);
-//
-//	debugPrintf("AT\r\n");
-//	while(1){
-//		wifiPrintf("AT\r\n");
-//		waitWiFiMsg();
-//		debugPrintf(" ->");
-//		debugPrintf(uart1Buffer);
-//		if(strcmp(uart1Buffer, "OK\r\n") == 0){
-//			break;
-//		}
-//		enableWiFiMsg();
-//	}
-//
+/*	debugPrintf("AT+UART_CUR=921600,8,1,0,3\r\n");
+	wifiPrintf("AT+UART_CUR=921600,8,1,0,3\r\n");
+	waitForRespOK();
 
+	Chip_Clock_SetUSARTNBaseClockRate((921600 * 16), true);
+	Chip_UART_SetBaud(LPC_USART0, 921600);
+	Chip_UART_SetBaud(LPC_USART1, 921600);*/
 
 	//waitForRespOK();
 
@@ -179,9 +169,9 @@ int main(void)
 	//wifiPrintf("AT+CWDHCP_CUR?\r\n");
 	//readLLL("OK\r\n");
 
-//	debugPrintf("AT+CWLAP=1\r\n");
-//	wifiPrintf("AT+CWLAP\r\n");
-//	waitForRespOK();
+	debugPrintf("AT+CWLAP=1\r\n");
+	wifiPrintf("AT+CWLAP\r\n");
+	waitForRespOK();
 
 //	debugPrintf("Wait AT+CWLAP resp OK! \r\n");
 
