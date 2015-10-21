@@ -52,7 +52,7 @@ typedef struct {
 	char name[10];
 } TWifiAp;
 
-#define WIFI_APLISTMAX 10
+#define WIFI_APLISTMAX 15
 extern TWifiAp wifiApList[WIFI_APLISTMAX];
 
 extern char APIP[20], STAPIP[20];

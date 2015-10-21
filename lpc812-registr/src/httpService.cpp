@@ -275,11 +275,157 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 	//blockWaitRecvBytesReport(true);
 }
 
+uint16_t parseInt16(char *str)
+{
+	char cc[5];
+	cc[0] = str[0];
+	cc[1] = str[1];
+	cc[2] = str[2];
+	cc[3] = str[3];
+	cc[4] = 0;
+	return strtol(cc, NULL, 16);
+}
+
+uint8_t parseInt8(char *str)
+{
+	char cc[3];
+	cc[0] = str[0];
+	cc[1] = str[1];
+	cc[2] = 0;
+	return strtol(cc, NULL, 16);
+}
+
+inline int8_t convertTwosCompl(int8_t a) {
+  //if (a < 0)
+//    a = ( ~-a|128 ) + 1;
+
+  return ~a + 1;
+}
+
+void getFirmware(TCmd &cmd, char *recvBuf)
+{
+	char numToStr[10];
+	int16_t wifiMsgLen = 0;
+	int32_t msgLength = cmd.contentLength;
+
+	int16_t curPacketLenLeft = 0;
+	while(msgLength > 0){
+		//waitWifiMsgAndStartRecv();
+		wifiMsgLen = recvWifiMsg(recvBuf);
+		debugPrintf(" httpServ => recvBuf:");
+		//debugPrintf(recvBuf);
+		debugPrintflen(recvBuf, wifiMsgLen);
+		debugPrintf("\r\n");
+		char *msg;
+
+		parseIPD(recvBuf, msg, cmd.curConnInd, &curPacketLenLeft);
+
+		debugPrintf(" httpServ => msg:");
+		debugPrintf(msg);
+		debugPrintf("\r\n");
+
+		msgLength -= strlen(msg);
+		msgLength -= curPacketLenLeft;
+
+		/*while(msgLength > 0){
+			uint16_t wifiMsgLen = waitWifiMsgAndStartRecv();
+			debugPrintf(" httpServ => ");
+			itoa(msgLength, numToStr, 10);
+			debugPrintf(numToStr);
+			debugPrintf(" | ");
+			itoa(wifiMsgLen, numToStr, 10);
+			debugPrintf(numToStr);
+			msgLength -= wifiMsgLen;
+			debugPrintf("\r\n");
+		}*/
+
+		//uint8_t strInd = 0;
+		while(curPacketLenLeft > 0){
+			wifiMsgLen = recvWifiMsg(recvBuf);
+			debugPrintflen(recvBuf, wifiMsgLen);
+			curPacketLenLeft -= wifiMsgLen;
+
+			/*debugPrintf(" => ");
+			itoa(wifiMsgLen, numToStr, 10);
+			debugPrintf(numToStr);
+			debugPrintf(" rn ");
+			itoa(curPacketLenLeft, numToStr, 10);
+			debugPrintf(numToStr);
+			debugPrintf(" chs >> ");
+			itoa(msgLength, numToStr, 10);
+			debugPrintf(numToStr);
+			debugPrintf(" chs >> ");*/
+
+
+			uint8_t dLen = 0, dType=0, dData[16], dCrc = 0;
+			uint16_t dAddr = 0;
+
+			char *parsePtr = &(recvBuf[1]);
+			dLen = parseInt8(parsePtr);
+			parsePtr+=2;
+			dAddr = parseInt16(parsePtr);
+			parsePtr+=4;
+			dType = parseInt8(parsePtr);
+			parsePtr+=2;
+
+			/*debugPrintf("l");
+			itoa(dLen, numToStr, 16);
+			debugPrintf(numToStr);
+			debugPrintf(".a");
+			itoa(dAddr, numToStr, 16);
+			debugPrintf(numToStr);
+			debugPrintf(".t");
+			itoa(dType, numToStr, 16);
+			debugPrintf(numToStr);
+			debugPrintf(" ");*/
+
+			uint8_t cc = 0;
+			cc+=dLen;
+			cc+=dType;
+			cc+=(dAddr&0xff);
+			cc+=((dAddr>>8)&0xff);
+
+			for(uint8_t i=0;i<dLen;i++){
+				dData[i] = parseInt8(parsePtr);
+				cc += dData[i];
+				parsePtr += 2;
+
+				/*itoa(dData[i], numToStr, 16);
+				debugPrintf(numToStr);
+				debugPrintf(".");*/
+			}
+
+			cc = convertTwosCompl(cc);
+			/*debugPrintf(" cc");
+			itoa(cc, numToStr, 16);
+			debugPrintf(numToStr);*/
+
+			dCrc = parseInt8(parsePtr);
+			/*debugPrintf(" c");
+			itoa(dCrc, numToStr, 16);
+			debugPrintf(numToStr);
+
+
+			debugPrintf(" chs >> ");
+			debugPrintf("data:");*/
+			if(dCrc != cc)
+				debugPrintf(" crc fail! \r\n");
+			//debugPrintflen(recvBuf, wifiMsgLen);
+
+		}
+
+		itoa(msgLength, numToStr, 16);
+		debugPrintf("-----> ");
+		debugPrintf(numToStr);
+		debugPrintf("\r\n");
+
+	}
+	debugPrintf(" ---- firmware end ----  \r\n");
+}
 
 __RODATA(text) char statusText1[] = "Wifi AP status: ON with name \"ESP_9DACCD\" with ip ";
 __RODATA(text) char statusText2[] = "</br>Wifi client status: connected on \"TL-WR842ND\" with ip ";
 __RODATA(text) char statusText3[] = "</br></br>Uptime: ";
-
 
 void vHttpServerTask ()
 {
@@ -335,7 +481,7 @@ void vHttpServerTask ()
 	//					for(int j=1; j<12; j++){
 	//						cntVals[j] += rand() % 100;
 	//					}
-				sendSvgData(htmlBody, cmd.curConnInd/*, cntVals*/);
+				//sendSvgData(htmlBody, cmd.curConnInd/*, cntVals*/);
 			}
 			debugPrintf("!!! stop send SVG!!!\r\n");
 			sendWifiDataToBuf(htmlPartStartSec3, cmd.curConnInd);
@@ -374,59 +520,7 @@ void vHttpServerTask ()
 		}
 		else if(cmd.htmlReqType == POST){
 			debugPrintf("httpTask-> !!! POST !!!\r\n");
-
-			char numToStr[10];
-			int16_t wifiMsgLen = 0;
-			uint32_t msgLength = cmd.contentLength;
-
-			int16_t curPacketLenLeft = 0;
-			while(1){
-				//waitWifiMsgAndStartRecv();
-				wifiMsgLen = recvWifiMsg(recvBuf);
-				debugPrintf(" httpServ => recvBuf:");
-				debugPrintf(recvBuf);
-				debugPrintf("\r\n");
-				char *msg;
-
-				parseIPD(recvBuf, msg, cmd.curConnInd, &curPacketLenLeft);
-
-				debugPrintf(" httpServ => msg:");
-				debugPrintf(msg);
-				debugPrintf("\r\n");
-
-				/*while(msgLength > 0){
-					uint16_t wifiMsgLen = waitWifiMsgAndStartRecv();
-					debugPrintf(" httpServ => ");
-					itoa(msgLength, numToStr, 10);
-					debugPrintf(numToStr);
-					debugPrintf(" | ");
-					itoa(wifiMsgLen, numToStr, 10);
-					debugPrintf(numToStr);
-					msgLength -= wifiMsgLen;
-					debugPrintf("\r\n");
-				}*/
-
-				uint8_t strInd = 0;
-				while(curPacketLenLeft > 0){
-					wifiMsgLen = recvWifiMsg(recvBuf);
-					curPacketLenLeft -= wifiMsgLen;
-
-					debugPrintf(" => ");
-					itoa(wifiMsgLen, numToStr, 10);
-					debugPrintf(numToStr);
-					debugPrintf(" rn ");
-					itoa(curPacketLenLeft, numToStr, 10);
-					debugPrintf(numToStr);
-					debugPrintf(" chs >> ");
-					itoa(msgLength, numToStr, 10);
-					debugPrintf(numToStr);
-					debugPrintf(" chs >> ");
-					debugPrintf("data:");
-					debugPrintf(recvBuf);
-				}
-
-			}
-
+			getFirmware(cmd, recvBuf);
 		}
 		else{
 			debugPrintf("httpTask-> not ROOT. send 404\r\n");

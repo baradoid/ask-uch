@@ -12,6 +12,7 @@ char APIP[20], STAPIP[20];
 
 TCmdType parseCIFSR(char *str)
 {
+	debugPrintf(str);
 	//debugPrintf("parseCIFSR\r\n");
 	TCmdType cmdType = UNKNWON;
 	if(MEMCMPx(str, "+CIFSR:APIP") == 0){
@@ -50,7 +51,7 @@ void parseCWLAP(char *str)
 		switch(i){
 		case 2:
 			//pch[strlen(pch)]='\0';
-			memcpy(&(carWifiAap->name[0]), pch+1, MIN(10, strlen(pch)-2));
+			memcpy(&(carWifiAap->name[0]), pch+1, MIN(10, strlen(pch)-2)); //need debug
 			//strcpy(&(carWifiAap->name[0]), pch+1);
 			break;
 		case 3:

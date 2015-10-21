@@ -685,5 +685,3 @@ void setwifiBaudRate(uint32_t baudrate)
 // return (0);                                                                            /* Function successful */
 //}
 
-
-
