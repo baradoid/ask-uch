@@ -3,6 +3,7 @@
 #include "uartUtils.h"
 
 extern uint64_t SysTickCnt;
+//#define DEBUGPRINTF
 
 bool isWiFiMsgRecvd()
 {
@@ -62,6 +63,9 @@ int16_t waitWifiMsgAndStartRecv()
 {
 	waitWiFiMsg();
 	uint16_t msgLen = getUartIrqMsgLength();
+#ifdef DEBUGPRINTF
+	debugPrintf(uart1Buffer);
+#endif
 	enableWiFiMsg();
 	return msgLen;
 }

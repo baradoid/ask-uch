@@ -133,6 +133,13 @@ void prepareHtmlData(char *bufStr)
 	addToHtml("<p><input type=\"submit\" name=\"submit\" value=\"submit\">");
 	addToHtml("   <input type=\"submit\" name=\"submit\" value=\"update\"></p>");
 	addToHtml("</form>");
+
+	addToHtml("<form enctype=\"multipart/form-data\" method=\"post\">");
+	addToHtml("<p>Select files</p>");
+	addToHtml("<p><input type=\"file\" name=\"firmware\" accept=\".hex\">");
+	addToHtml("<input type=\"submit\" value=\"Upload\"></p>");
+	addToHtml("</form>");
+
 	//addToHtml("<form  method=\"get\"><input type=\"submit\" value=\"update\"></form>");
 	addToHtml("</section></div>");
 
@@ -174,7 +181,7 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 	uint32_t delta = 10;
 	uint32_t gap = 10;
 
-	static uint8_t sendBufIdx = 1;
+	//static uint8_t sendBufIdx = 1;
 
 	char numToStr[5];
 	//startSendWifiDataWithLen(1908, curConnInd, sendBufIdx++);
@@ -283,14 +290,14 @@ void vHttpServerTask ()
 
 	debugPrintf("httpTask->");
 	debugPrintf(recvBuf);
+	debugPrintf("\r\n");
 
 	//debugPrintf("start process \r\n");
 
 	if(cmd.type == IPD){
 		//debugPrintf("!!! IPD !!!\r\n");
 		if(cmd.htmlReqType == GET_ROOT){
-			debugPrintf("httpTask->");
-			debugPrintf("!!! GET_ROOT !!!\r\n");
+			debugPrintf("httpTask-> !!! GET_ROOT !!!\r\n");
 			extern uint64_t SysTickCnt;
 			uint32_t startGenPage =  (uint32_t)SysTickCnt;
 
@@ -365,9 +372,64 @@ void vHttpServerTask ()
 
 			//waitForRespOK();
 		}
+		else if(cmd.htmlReqType == POST){
+			debugPrintf("httpTask-> !!! POST !!!\r\n");
+
+			char numToStr[10];
+			int16_t wifiMsgLen = 0;
+			uint32_t msgLength = cmd.contentLength;
+
+			int16_t curPacketLenLeft = 0;
+			while(1){
+				//waitWifiMsgAndStartRecv();
+				wifiMsgLen = recvWifiMsg(recvBuf);
+				debugPrintf(" httpServ => recvBuf:");
+				debugPrintf(recvBuf);
+				debugPrintf("\r\n");
+				char *msg;
+
+				parseIPD(recvBuf, msg, cmd.curConnInd, &curPacketLenLeft);
+
+				debugPrintf(" httpServ => msg:");
+				debugPrintf(msg);
+				debugPrintf("\r\n");
+
+				/*while(msgLength > 0){
+					uint16_t wifiMsgLen = waitWifiMsgAndStartRecv();
+					debugPrintf(" httpServ => ");
+					itoa(msgLength, numToStr, 10);
+					debugPrintf(numToStr);
+					debugPrintf(" | ");
+					itoa(wifiMsgLen, numToStr, 10);
+					debugPrintf(numToStr);
+					msgLength -= wifiMsgLen;
+					debugPrintf("\r\n");
+				}*/
+
+				uint8_t strInd = 0;
+				while(curPacketLenLeft > 0){
+					wifiMsgLen = recvWifiMsg(recvBuf);
+					curPacketLenLeft -= wifiMsgLen;
+
+					debugPrintf(" => ");
+					itoa(wifiMsgLen, numToStr, 10);
+					debugPrintf(numToStr);
+					debugPrintf(" rn ");
+					itoa(curPacketLenLeft, numToStr, 10);
+					debugPrintf(numToStr);
+					debugPrintf(" chs >> ");
+					itoa(msgLength, numToStr, 10);
+					debugPrintf(numToStr);
+					debugPrintf(" chs >> ");
+					debugPrintf("data:");
+					debugPrintf(recvBuf);
+				}
+
+			}
+
+		}
 		else{
-			debugPrintf("httpTask->");
-			debugPrintf("not ROOT. send 404\r\n");
+			debugPrintf("httpTask-> not ROOT. send 404\r\n");
 			sendWifiData(html404, cmd.curConnInd);
 	//				wifiPrintf("AT+CIPSEND=");
 	//				debugPrintf("AT+CIPSEND=");
@@ -416,71 +478,6 @@ void vHttpServerTask ()
 		}
 	}
 	return;
-
-	if(cmd.type == IPD){
-		if(cmd.htmlReqType == GET_ROOT){
-
-//				wifiPrintf("AT+CIPSEND=");
-//				debugPrintf("AT+CIPSEND=");
-//				itoa(curConnInd, numToStr, 10);
-//				wifiPrintf(numToStr);
-//				debugPrintf(numToStr);
-//				wifiPrintf(",");
-//				debugPrintf(",");
-//				itoa(strlen(&(htmlSimple[0])), numToStr, 10);
-//				wifiPrintf(numToStr);
-//				debugPrintf(numToStr);
-//				wifiPrintf("\r\n");
-//				debugPrintf("\r\n");
-//
-//				while(1){
-//					TCmdType cmd = blockWaitCmd();
-//					if( cmd == ready_to_send){
-//						break;
-//					}
-//
-//					if( cmd == CMD_CLOSED){
-//						debugPrintf("detect CLOSED \r\n");
-//						return;
-//					}
-//					if(cmd == busy_s){
-//						//while (1) ;
-//					}
-//
-//				}
-//				//debugPrintf("ready_to_send \r\n");
-//				wifiPrintf(&(htmlSimple[0]));
-//				debugPrintf(&(htmlSimple[0]));
-//				while(1){
-//					TCmdType cmd = blockWaitCmd();
-//					if( cmd == RESP_SEND_OK){
-//						break;
-//					}
-//				}
-
-
-
-//				debugPrintf("!!! htmlSimple SEND_OK detected!!!\r\n");
-//				for(int i=0; i<100000; i++) ;
-//				debugPrintf("!!! htmlSimple SEND_OK detected!!!\r\n");
-//				wifiPrintf("AT+CIPCLOSE=");
-//				itoa(curConnInd, numToStr, 10);
-//				wifiPrintf(numToStr);
-//				wifiPrintf("\r\n");
-//				while(1){
-//					TCmdType cmd = blockWaitCmd();
-//					if( cmd == CMD_OK){
-//						break;
-//					}
-//				}
-//				debugPrintf("!!! AT+CIPCLOSE CMD_OK detected!!!\r\n");
-
-
-	}
-	else {
-
-		}
-	}
 //}
 
 
@@ -525,19 +522,29 @@ void parseHttpReq(char *str, THtmlReqType &htmlReqType)
 {
 	char *pch;
 	uint8_t argInd = 0;
-	//debugPrintf(" ! parse http req ! start\r\n");
-	//debugPrintf(str);
-	//debugPrintf("\r\n");
+	debugPrintf(" parseHttpReq->");
+	debugPrintf(str);
+	debugPrintf("\r\n");
 
 	pch = strtok (str, " ");
 	while(pch != NULL){
 		//debugPrintf(pch);
 		//debugPrintf("\r\n");
 
+		if(argInd == 0){
+			if(strcmp(pch, "GET") == 0){
+				debugPrintf(" httpReqParsing-> GET_ROOT\r\n");
+				htmlReqType = GET_ROOT;
+			}
+			if(strcmp(pch, "POST") == 0){
+				debugPrintf(" httpReqParsing-> POST\r\n");
+				htmlReqType = POST;
+			}
+		}
 		if(argInd == 1){
 			if(strcmp(pch, "/") == 0){
 				//debugPrintf(" GET_ROOT detected\r\n");
-				htmlReqType = GET_ROOT;
+				//cmd.htmlReqType = GET_ROOT;
 			}
 			else if(strcmp(pch, "/favicon.ico") == 0){
 				//debugPrintf(" GET_FAVICON detected\r\n");
@@ -552,4 +559,38 @@ void parseHttpReq(char *str, THtmlReqType &htmlReqType)
 	//debugPrintf(" ! parse http req ! stop\r\n");
 }
 
+void parsePostReqHead(char *str, TCmd &cmd, uint16_t msgLen, uint8_t strInd)
+{
+	char numToStr[10];
+	debugPrintf(" postReqhead-> ");
+	if(strInd == 2){
+		debugPrintf(" conn len! ");
+		char *pch = strtok (str, " ");
+		pch = strtok (NULL, " ");
+		if(pch != NULL){
+			debugPrintf(pch);
+			char numToStr[10];
+			cmd.contentLength = atoi(pch);
+		}
+		debugPrintf(" \r'n");
+	}
+	itoa(strInd, numToStr, 10);
+	debugPrintf(numToStr);
+	debugPrintf(" ");
+
+	debugPrintf(str);
+
+
+}
+
+void parsePostReq(char *str, uint16_t msgLen, uint8_t strInd)
+{
+	char numToStr[10];
+	debugPrintf(" postReq-> ");
+	itoa(strInd, numToStr, 10);
+	debugPrintf(numToStr);
+	debugPrintf(" ");
+
+	debugPrintf(str);
+}
 

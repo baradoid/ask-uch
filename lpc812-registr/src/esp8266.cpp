@@ -70,25 +70,25 @@ void scanWiFiAp()
 	waitForRespOK();
 }
 
-void parseIPD(char *str, TCmd &cmd, int16_t *msgLen)
+void parseIPD(char *str, char *&msg, uint8_t &curConnInd, int16_t *msgLen)
 {
-	char *pch;
 	//char numToStr[10];
-	char *strHttpReq = NULL;
+	char *pch;
 	uint8_t i;
 
 	uint16_t tailLen = 0;
 	//debugPrintf("parseIPD\r\n");
 	pch = strtok (str, ",:");
-	for(i=0; pch != NULL; i++){
+	for(i=0; (pch != NULL)||(i<4); i++){
 		switch(i){
 		case 1:
-			cmd.curConnInd = (uint8_t)atoi(pch);
+			curConnInd = (uint8_t)atoi(pch);
 			break;
 		case 2:
 			*msgLen = atoi(pch);
-			//debugPrintf("msg length:");
-			//debugPrintf(pch);
+			/*debugPrintf("msg length:");
+			debugPrintf(pch);
+			debugPrintf("  ");*/
 			//debugPrintf("\r\n");
 
 			//debugPrintf(pch);
@@ -96,7 +96,12 @@ void parseIPD(char *str, TCmd &cmd, int16_t *msgLen)
 			break;
 		case 3:
 			tailLen = strlen(pch);
-			strHttpReq = pch;
+			msg = pch;
+
+			/*debugPrintf(" tail:\"");
+			debugPrintf(msg);
+			debugPrintf("\"  ");*/
+
 			//itoa(strlen(pch), tailLen, 10);
 			//atoi(pch);
 			//debugPrintf(pch);
@@ -108,7 +113,6 @@ void parseIPD(char *str, TCmd &cmd, int16_t *msgLen)
 		}
 		pch = strtok (NULL, ",:");
 	}
-	parseHttpReq(strHttpReq, cmd.htmlReqType);
 
 //	debugPrintf("conNum ");
 //	itoa(*curConnInd, numToStr, 10);
@@ -122,6 +126,7 @@ void parseIPD(char *str, TCmd &cmd, int16_t *msgLen)
 	debugPrintf(numToStr);
 	debugPrintf(" chars already recvd\r\n");*/
 	*msgLen -= tailLen;
+
 }
 
 
@@ -140,33 +145,56 @@ void getNextWifiCmdExtBuf(char recvBuf[], TCmd &cmd, int16_t to_msec)
 	if(msgLen == -1)
 		debugPrintf("timeout!\r\n");
 	else{
-		debugPrintf(" ->");
+		debugPrintf(" esp-> ");
 		debugPrintflen(recvBuf, msgLen);
 	}
 #endif
 	if(msgLen != -1){
 		if(recvBuf[0] == '+'){
 			if(MEMCMPx(recvBuf, "+IPD") == 0){
-				//char numToStr[10];
-				debugPrintf("!!! +IPD !!!\r\n");
-				int16_t msgLength = 0;
-				parseIPD(recvBuf, cmd, &msgLength);
 
+#ifdef DEBUGPRINTF
+				debugPrintf(" esp-> !!! +IPD !!!\r\n");
+#endif
+				int16_t msgLength = 0;
+				//void parseIPD(char *str, char **msg, uint8_t &curConnInd, int16_t *msgLen);
+				char *msg;
+				parseIPD(recvBuf, msg, cmd.curConnInd, &msgLength);
+				/*debugPrintf(" esp-> !!! ");
+				debugPrintf(msg);
+				debugPrintf(" !!!  \r\n");*/
+
+				//cmd.charsInHead = strlen(msg);
+				parseHttpReq(msg, cmd.htmlReqType);
+
+				uint8_t strInd = 0;
 				while(msgLength > 0){
-					uint16_t wifiMsgLen = waitWifiMsgAndStartRecv();
+
+					uint16_t wifiMsgLen = 0;
+
+					if(cmd.htmlReqType == POST){
+						wifiMsgLen = recvWifiMsg(recvBuf);
+						parsePostReqHead(recvBuf, cmd, wifiMsgLen, strInd);
+						strInd++;
+					}
+					else{
+						wifiMsgLen = waitWifiMsgAndStartRecv();
+					}
+
 					msgLength -= wifiMsgLen;
 
-				/*	debugPrintf(" => ");
+					char numToStr[10];
+					debugPrintf(" esp =>  ");
 					itoa(wifiMsgLen, numToStr, 10);
 					debugPrintf(numToStr);
 					debugPrintf(" rn ");
 					itoa(msgLength, numToStr, 10);
 					debugPrintf(numToStr);
-					debugPrintf(" chs\r\n");*/
+					debugPrintf(" chs\r\n");
 				}
-
-				debugPrintf(" message recvd! \r\n");
-
+#ifdef DEBUGPRINTF
+				debugPrintf(" esp-> message recvd! \r\n");
+#endif
 				cmd.type = IPD;
 			}
 			else if(MEMCMPx(recvBuf, "+CIFSR") == 0){
@@ -218,6 +246,12 @@ void getNextWifiCmdExtBuf(char recvBuf[], TCmd &cmd, int16_t to_msec)
 		}
 		else if(strcmp(recvBuf, "WIFI DISCONNECT\r\n") == 0){
 			cmd.type = wifi_discon;
+		}
+		else if(strcmp(recvBuf, "FAIL\r\n") == 0){
+#ifdef DEBUGPRINTF
+			debugPrintf("!!!FAIL!!!\r\n");
+#endif
+			cmd.type = FAIL;
 		}
 		else if(strcmp(recvBuf, "ready\r\n") == 0)
 			cmd.type = ready;

@@ -23,6 +23,7 @@ typedef enum {
 	busy_s,
 	ready_to_send,
 	recv_bytes_report,
+	FAIL,
 	UNKNWON
 } TCmdType;
 
@@ -38,6 +39,8 @@ typedef struct {
 		struct{
 			uint8_t curConnInd;
 			THtmlReqType htmlReqType;
+			uint32_t contentLength;
+			//uint16_t charsInHead;
 		};
 	};
 
@@ -66,4 +69,6 @@ void sendWifiDataToBuf(char *str, uint8_t connId);
 void sendCipClose(uint8_t id);
 
 void waitForRespOK();
+
+void parseIPD(char *str, char *&msg, uint8_t &curConnInd, int16_t *msgLen);
 

@@ -118,7 +118,7 @@ int main(void)
 		getNextWifiCmd(cmd, INFINITY);
 		if( cmd.type == wifi_gotip)
 			break;
-		if(cmd.type == wifi_discon){
+		if( cmd.type == wifi_discon){
 			debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
 			wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
 			//debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
