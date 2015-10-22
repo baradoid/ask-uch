@@ -306,26 +306,114 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 {
 	char numToStr[10];
 	int16_t wifiMsgLen = 0;
-	int32_t msgLength = cmd.contentLength;
+	int32_t contentLength = cmd.contentLength;
 
 	int16_t curPacketLenLeft = 0;
-	while(msgLength > 0){
+	uint8_t curConnInd;
+
+	debugPrintf(" getFirmware s=> wait for IPD \r\n");
+	while(1){
+		wifiMsgLen = recvWifiMsg(recvBuf);
+		debugPrintf(" getFirmware s=>");
+		debugPrintflen(recvBuf, wifiMsgLen);
+		if(recvBuf[0] == '+'){
+			char *pch = strstr(recvBuf, "+IPD");
+			if(pch != NULL){
+				debugPrintf(" getFirmware s=> IPD detected. \r\n");
+				char *msg;
+				parseIPD(recvBuf, msg, curConnInd, &curPacketLenLeft);
+				debugPrintf(" getFirmware s=> msg:");
+				debugPrintf(msg);
+				debugPrintf("\r\n");
+				break;
+			}
+		}
+	}
+
+	debugPrintf(" getFirmware s=> wait for data \r\n");
+	while(1){
+		wifiMsgLen = recvWifiMsg(recvBuf);
+		curPacketLenLeft -= wifiMsgLen;
+
+		debugPrintf(" getFirmware s=>");
+		debugPrintflen(recvBuf, wifiMsgLen);
+		if(recvBuf[0] == ':'){
+			debugPrintf(" getFirmware s=>Data start detected\r\n");
+			break;
+		}
+	}
+	debugPrintf(" getFirmware s=>Start Data recv ==== \r\n");
+	debugPrintflen(recvBuf, wifiMsgLen);
+	char dataBuffer[50];
+	bool bMsg;
+	while(1){
+		wifiMsgLen = recvWifiMsg(recvBuf);
+		debugPrintf(" getFirmware s=>");
+		debugPrintflen(recvBuf, wifiMsgLen);
+
+		itoa(wifiMsgLen, numToStr, 10);
+		debugPrintf(" getFirmware s=>");
+		debugPrintf(numToStr);
+		debugPrintf("\r\n");
+
+		if(curPacketLenLeft > 0){
+			curPacketLenLeft -= wifiMsgLen;
+
+			if((wifiMsgLen-2) >= 3){  //key and Len exists
+				uint8_t dLen = 0;
+				char *parsePtr = &(recvBuf[1]);
+				dLen = parseInt8(parsePtr);
+
+				itoa(dLen, numToStr, 10);
+				debugPrintf(" getFirmware s=>dLen=");
+				debugPrintf(numToStr);
+				debugPrintf("  ");
+				itoa((1+2+4+2+dLen*2+2), numToStr, 10);
+				debugPrintf(numToStr);
+				debugPrintf("\r\n");
+				if((wifiMsgLen-2) >= (1+2+4+2+dLen*2+2)){
+
+				}
+				else{
+					debugPrintf(" getFirmware s=>not enough data\r\n");
+				}
+			}
+			else{
+				memcpy(dataBuffer, recvBuf, (wifiMsgLen-2));
+				dataBuffer[(wifiMsgLen-2)] = '\0';
+				debugPrintf(" getFirmware s=>start fo msg saved");
+				debugPrintf(dataBuffer);
+				debugPrintf("\r\n");
+			}
+
+		}
+		else{
+			char *msg;
+			parseIPD(recvBuf, msg, curConnInd, &curPacketLenLeft);
+			debugPrintf(" getFirmware s=> msg:");
+			debugPrintf(msg);
+			debugPrintf("\r\n");
+		}
+
+	}
+
+	while(contentLength > 0){
 		//waitWifiMsgAndStartRecv();
 		wifiMsgLen = recvWifiMsg(recvBuf);
-		debugPrintf(" httpServ => recvBuf:");
+		debugPrintf(" getFirmware s=> recvBuf:");
 		//debugPrintf(recvBuf);
 		debugPrintflen(recvBuf, wifiMsgLen);
 		debugPrintf("\r\n");
 		char *msg;
 
-		parseIPD(recvBuf, msg, cmd.curConnInd, &curPacketLenLeft);
+		parseIPD(recvBuf, msg, curConnInd, &curPacketLenLeft);
 
-		debugPrintf(" httpServ => msg:");
+		debugPrintf(" getFirmware s=> msg:");
 		debugPrintf(msg);
 		debugPrintf("\r\n");
 
-		msgLength -= strlen(msg);
-		msgLength -= curPacketLenLeft;
+		contentLength -= strlen(msg);
+		contentLength -= curPacketLenLeft;
 
 		/*while(msgLength > 0){
 			uint16_t wifiMsgLen = waitWifiMsgAndStartRecv();
@@ -342,6 +430,7 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 		//uint8_t strInd = 0;
 		while(curPacketLenLeft > 0){
 			wifiMsgLen = recvWifiMsg(recvBuf);
+			debugPrintf(" getFirmware->");
 			debugPrintflen(recvBuf, wifiMsgLen);
 			curPacketLenLeft -= wifiMsgLen;
 
@@ -355,6 +444,11 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 			itoa(msgLength, numToStr, 10);
 			debugPrintf(numToStr);
 			debugPrintf(" chs >> ");*/
+
+			if(recvBuf[0] != ':'){
+				debugPrintf(" not data\r\n");
+				continue;
+			}
 
 
 			uint8_t dLen = 0, dType=0, dData[16], dCrc = 0;
@@ -414,11 +508,10 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 
 		}
 
-		itoa(msgLength, numToStr, 16);
+		itoa(contentLength, numToStr, 10);
 		debugPrintf("-----> ");
 		debugPrintf(numToStr);
 		debugPrintf("\r\n");
-
 	}
 	debugPrintf(" ---- firmware end ----  \r\n");
 }

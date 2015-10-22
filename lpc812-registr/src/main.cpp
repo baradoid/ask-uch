@@ -119,10 +119,10 @@ int main(void)
 		if( cmd.type == wifi_gotip)
 			break;
 		if( cmd.type == wifi_discon){
-			//debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
-			//wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
-			debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
-			wifiPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+			debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
+			wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
+			//debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+			//wifiPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
 			waitForRespOK();
 			break;
 		}
@@ -185,53 +185,6 @@ int main(void)
 
 	while(1) {
 		vHttpServerTask ();
-//		TCmd cmd = getNextWifiCmd(INFINITY, true);
-//		waitWiFiMsg();
-//		uint16_t msgLen = getUartIrqMsgLength();
-//		memcpy(uart1ProcBuffer, uart1Buffer, BUF_LEN);
-//		enableWiFiMsg();
-//
-//		debugPrintf("got msg! -> ");
-//		debugPrintflen(uart1ProcBuffer, msgLen);
-//
-//		TCmdType cmdType = UNKNWON;
-//		parseCommand(cmdType, uart1ProcBuffer, true);
-
-		//processMsg();
-
-    	//vUartTask();
-    	//debugPrintf("s\r\n");
-//    	if(errword){
-//    		debugPrintf("err ");
-//    		if(errword&(1<<RINGBUF_FULL_BITNUM))
-//    			debugPrintf("RINGBUF_FULL!");
-//    		if(errword&(1<<UARTTMPBUF_FULL_BITNUM))
-//    		    debugPrintf("UARTTMPBUF_FULL!");
-//    		debugPrintf("\r\n");
-//    		while(1);
-//    	}
-
-//        if( SysTickCnt >= cnt_100ms ){
-//            cnt_100ms = SysTickCnt+100;
-//        }
-//        if( SysTickCnt >= cnt_15s ){
-//        	cnt_15s = SysTickCnt+15000;
-//        	//debugPrintf("time to rescan wifi\r\n");
-//        	//scanWiFiAp();
-//        }
-        //	char iToStr[10];
-        //	if(SysTickCnt > 1000){
-        //		SysTickCnt = 0;
-        		//debugPrintf("sec \r\n");
-        //		if(secondsCount++ >= 59){
-        //			secondsCount = 0;
-        //			minutsCount++;
-        //			itoa(minutsCount, iToStr, 10);
-        //			debugPrintf("min ");
-        //			debugPrintf(iToStr);
-        //			debugPrintf("\r\n");
-        //		}
-        //	}
     }
     return 0 ;
 }

@@ -73,19 +73,17 @@ void scanWiFiAp()
 
 void parseIPD(char *str, char *&msg, uint8_t &curConnInd, int16_t *msgLen)
 {
-	//char numToStr[10];
-	char *pch;
 	uint8_t i;
-
+	char *pch, key[] = ",:";
 	uint16_t tailLen = 0;
-	//debugPrintf("parseIPD\r\n");
-	pch = strtok (str, ",:");
+	//debugPrintf("parseIPD ");
+	pch = strpbrk (str, key);
 	for(i=0; (pch != NULL)||(i<4); i++){
-		switch(i){
-		case 1:
+		pch++;
+		if(i == 0){
 			curConnInd = (uint8_t)atoi(pch);
-			break;
-		case 2:
+		}
+		else if(i == 1){
 			*msgLen = atoi(pch);
 			/*debugPrintf("msg length:");
 			debugPrintf(pch);
@@ -94,8 +92,8 @@ void parseIPD(char *str, char *&msg, uint8_t &curConnInd, int16_t *msgLen)
 
 			//debugPrintf(pch);
 			//debugPrintf("\r\n");
-			break;
-		case 3:
+		}
+		else if(i == 2){
 			tailLen = strlen(pch);
 			msg = pch;
 
@@ -112,21 +110,23 @@ void parseIPD(char *str, char *&msg, uint8_t &curConnInd, int16_t *msgLen)
 
 			break;
 		}
-		pch = strtok (NULL, ",:");
+		pch = strpbrk (pch, key);
 	}
+	*msgLen -= tailLen;
 
-//	debugPrintf("conNum ");
-//	itoa(*curConnInd, numToStr, 10);
-//	debugPrintf(numToStr);
+	/*char numToStr[10];
+	//debugPrintf("parseIPD ");
+	debugPrintf("conNum ");
+	itoa(curConnInd, numToStr, 10);
+	debugPrintf(numToStr);
 
-	/*debugPrintf(" start recv msg with length ");
+	debugPrintf(" start recv msg with length ");
 	itoa(*msgLen, numToStr, 10);
 	debugPrintf(numToStr);
 	debugPrintf(" and ");
 	itoa(tailLen, numToStr, 10);
 	debugPrintf(numToStr);
 	debugPrintf(" chars already recvd\r\n");*/
-	*msgLen -= tailLen;
 
 }
 
