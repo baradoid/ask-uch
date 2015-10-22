@@ -119,10 +119,10 @@ int main(void)
 		if( cmd.type == wifi_gotip)
 			break;
 		if( cmd.type == wifi_discon){
-			debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
-			wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
-			//debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
-			//wifiPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+			//debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
+			//wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
+			debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+			wifiPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
 			waitForRespOK();
 			break;
 		}
@@ -164,8 +164,8 @@ int main(void)
 	//readLLL("OK\r\n");
 
 	//debugPrintf("AT+CWLAP=1\r\n");
-	//wifiPrintf("AT+CWLAP\r\n");
-	//waitForRespOK();
+	wifiPrintf("AT+CWLAP\r\n");
+	waitForRespOK();
 
 //	debugPrintf("Wait AT+CWLAP resp OK! \r\n");
 

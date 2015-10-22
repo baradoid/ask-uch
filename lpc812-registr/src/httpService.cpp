@@ -311,6 +311,14 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 	int16_t curPacketLenLeft = 0;
 	uint8_t curConnInd;
 
+	debugPrintf(" getFirmware s=> start \r\n");
+	while(1){
+		wifiMsgLen = getWifiNextString(recvBuf);
+		debugPrintf(" getFirmware s=>");
+		debugPrintflen(recvBuf, wifiMsgLen);
+	}
+	return;
+
 	debugPrintf(" getFirmware s=> wait for IPD \r\n");
 	while(1){
 		wifiMsgLen = recvWifiMsg(recvBuf);
@@ -396,6 +404,7 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 		}
 
 	}
+	return;
 
 	while(contentLength > 0){
 		//waitWifiMsgAndStartRecv();
@@ -574,7 +583,7 @@ void vHttpServerTask ()
 	//					for(int j=1; j<12; j++){
 	//						cntVals[j] += rand() % 100;
 	//					}
-				//sendSvgData(htmlBody, cmd.curConnInd/*, cntVals*/);
+				sendSvgData(htmlBody, cmd.curConnInd/*, cntVals*/);
 			}
 			debugPrintf("!!! stop send SVG!!!\r\n");
 			sendWifiDataToBuf(htmlPartStartSec3, cmd.curConnInd);
