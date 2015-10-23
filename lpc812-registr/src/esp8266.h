@@ -70,7 +70,7 @@ void sendCipClose(uint8_t id);
 
 void waitForRespOK();
 
-uint16_t parseIPD(char *str, char *&msg, uint8_t &curConnInd, int16_t *msgLen);
+uint16_t parseIPD(char *str, uint8_t &curConnInd, int16_t *msgLen);
 
 uint16_t getWifiNextString(char recvBuf[]);
 

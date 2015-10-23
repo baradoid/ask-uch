@@ -71,10 +71,10 @@ void scanWiFiAp()
 	waitForRespOK();
 }
 
-uint16_t parseIPD(char *str, char *&msg, uint8_t &curConnInd, int16_t *msgLen)
+uint16_t parseIPD(char *str, uint8_t &curConnInd, int16_t *msgLen)
 {
 	uint8_t i;
-	char *pch, key[] = ",:";
+	char *pch, *msg, key[] = ",:";
 	uint16_t tailLen = 0;
 	//debugPrintf("parseIPD ");
 	pch = strpbrk (str, key);
@@ -112,6 +112,9 @@ uint16_t parseIPD(char *str, char *&msg, uint8_t &curConnInd, int16_t *msgLen)
 		}
 		pch = strpbrk (pch, key);
 	}
+	memcpy(str, msg, tailLen);
+	str[tailLen] = '\0';
+
 	*msgLen -= tailLen;
 
 	/*char numToStr[10];
@@ -160,14 +163,14 @@ void getNextWifiCmdExtBuf(char recvBuf[], TCmd &cmd, int16_t to_msec)
 #endif
 				int16_t msgLength = 0;
 				//void parseIPD(char *str, char **msg, uint8_t &curConnInd, int16_t *msgLen);
-				char *msg;
-				parseIPD(recvBuf, msg, cmd.curConnInd, &msgLength);
+
+				parseIPD(recvBuf, cmd.curConnInd, &msgLength);
 				/*debugPrintf(" esp-> !!! ");
 				debugPrintf(msg);
 				debugPrintf(" !!!  \r\n");*/
 
 				//cmd.charsInHead = strlen(msg);
-				parseHttpReq(msg, cmd.htmlReqType);
+				parseHttpReq(recvBuf, cmd.htmlReqType);
 
 				uint8_t strInd = 0;
 				while(msgLength > 0){
@@ -605,13 +608,15 @@ void waitForCIPSENDResp()
 	}
 }
 
-int16_t wifiMsgLen = 0;
-int16_t curPacketLenLeft = 0;
-uint8_t curConnInd;
+
 uint16_t getWifiNextString(char recvBuf[])
 {
-	char numToStr[10], *msg;
+	static int16_t curPacketLenLeft = 0;
+	char numToStr[10] /*, *msg*/;
+	uint8_t curConnInd;
 	int16_t stringLen = 0;
+	int16_t wifiMsgLen = 0;
+
 	wifiMsgLen = recvWifiMsg(recvBuf);
 	//debugPrintf(" getWifiNextString ");
 	//itoa(curPacketLenLeft, numToStr, 10);
@@ -627,8 +632,8 @@ uint16_t getWifiNextString(char recvBuf[])
 			if(memcmp(recvBuf, "+IPD", 4) == 0){
 				//debugPrintf(" getWifiNextString=> IPD detected. \r\n");
 
-				stringLen = parseIPD(recvBuf, msg, curConnInd, &curPacketLenLeft);
-				memcpy(recvBuf, msg, stringLen);
+				stringLen = parseIPD(recvBuf, curConnInd, &curPacketLenLeft);
+				//memcpy(recvBuf, msg, stringLen);
 				//debugPrintf(" getWifiNextString=> msg:");
 				//debugPrintf(recvBuf);
 				//debugPrintf("\r\n");
@@ -660,9 +665,9 @@ uint16_t getWifiNextString(char recvBuf[])
 				//debugPrintf(" getWifiNextString =>");
 				//debugPrintf(pBufTail);
 
-				wifiMsgLen = parseIPD(pBufTail, msg, curConnInd, &curPacketLenLeft);
-				memcpy(pBufTail, msg, wifiMsgLen);
-				pBufTail[wifiMsgLen] = '\0';
+				wifiMsgLen = parseIPD(pBufTail, curConnInd, &curPacketLenLeft);
+				//memcpy(pBufTail, msg, wifiMsgLen);
+				//pBufTail[wifiMsgLen] = '\0';
 
 				stringLen += wifiMsgLen;
 

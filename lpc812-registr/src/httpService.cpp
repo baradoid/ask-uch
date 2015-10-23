@@ -328,10 +328,10 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 			char *pch = strstr(recvBuf, "+IPD");
 			if(pch != NULL){
 				debugPrintf(" getFirmware s=> IPD detected. \r\n");
-				char *msg;
-				parseIPD(recvBuf, msg, curConnInd, &curPacketLenLeft);
+				//char *msg;
+				parseIPD(recvBuf, curConnInd, &curPacketLenLeft);
 				debugPrintf(" getFirmware s=> msg:");
-				debugPrintf(msg);
+				debugPrintf(recvBuf);
 				debugPrintf("\r\n");
 				break;
 			}
@@ -396,10 +396,9 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 
 		}
 		else{
-			char *msg;
-			parseIPD(recvBuf, msg, curConnInd, &curPacketLenLeft);
+			parseIPD(recvBuf, curConnInd, &curPacketLenLeft);
 			debugPrintf(" getFirmware s=> msg:");
-			debugPrintf(msg);
+			debugPrintf(recvBuf);
 			debugPrintf("\r\n");
 		}
 
@@ -413,15 +412,15 @@ void getFirmware(TCmd &cmd, char *recvBuf)
 		//debugPrintf(recvBuf);
 		debugPrintflen(recvBuf, wifiMsgLen);
 		debugPrintf("\r\n");
-		char *msg;
+		//char *msg;
 
-		parseIPD(recvBuf, msg, curConnInd, &curPacketLenLeft);
+		parseIPD(recvBuf, curConnInd, &curPacketLenLeft);
 
 		debugPrintf(" getFirmware s=> msg:");
-		debugPrintf(msg);
+		debugPrintf(recvBuf);
 		debugPrintf("\r\n");
 
-		contentLength -= strlen(msg);
+		contentLength -= strlen(recvBuf);
 		contentLength -= curPacketLenLeft;
 
 		/*while(msgLength > 0){
