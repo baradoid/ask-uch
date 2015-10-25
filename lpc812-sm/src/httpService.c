@@ -401,35 +401,35 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 	char msg2[] = " getFirmware s=> Chip_IAP_EraseSector ret \r\n";
 	char msg3[] = "skip\r\n";
 	char msg4[] = "end\r\n";
+	char msg5[] = " getFirmware s=> Chip_IAP_PreSectorForReadWrite ret \r\n";
+	char msg6[] = " getFirmware s=> start \r\n";
 	__disable_irq();
 
 	NVIC_DisableIRQ(UART1_IRQn);
 	NVIC_DisableIRQ(SysTick_IRQn);
 
 	uint8_t i;
-	for(i=0; i<16; i++){
+//	for(i=0; i<16; i++){
 //		if( (i != 3) && (i != 2)  && (i != 1) && (i != 0)){
-			ret = Chip_IAP_PreSectorForReadWrite(i, i);
-			debugPrintf(msg1);
-			ret = Chip_IAP_EraseSectorExt(i, i, SystemCoreClock1000);
-			debugPrintf(msg2);
+			//ret = Chip_IAP_PreSectorForReadWrite(i, i);
+			//debugPrintf(msg1);
+//			ret = Chip_IAP_EraseSectorExt(i, i, SystemCoreClock1000);
+		//	debugPrintf(msg2);
 //		}
 //		else{
 //			debugPrintf(msg3);
 //		}
-	}
-	debugPrintf(msg4);
-	while(1) ;
-	return;
+	//}
+	//debugPrintf(msg4);
 
 	//__disable_irq();
-	ret = Chip_IAP_PreSectorForReadWrite(0, 15);
+	//ret = Chip_IAP_PreSectorForReadWrite(0, 15);
 	//__enable_irq();
 
 	//itoa(ret, numToStr, 10);
-	debugPrintf(" getFirmware s=> Chip_IAP_PreSectorForReadWrite ret ");
+	debugPrintf(msg5);
 	//debugPrintflen(numToStr);
-	debugPrintf("\r\n");
+	//debugPrintf("\r\n");
 
 	/*debugPrintf(" == > ");
 	itoa(presSecRet1, numToStr, 10);
@@ -442,7 +442,7 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 	debugPrintf(numToStr);
 	debugPrintf(" \r\n ");*/
 
-	debugPrintf(" getFirmware s=> start \r\n");
+	debugPrintf(msg6);
 
 	//NVIC_SystemReset();
 	uint8_t data[256],*pPtr = data;
@@ -451,8 +451,10 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 		wifiMsgLen = getWifiNextString(recvBuf);
 		//wifiMsgLen = recvWifiMsgBlocking(recvBuf);
 
-		debugPrintf(" getFirmware s=>");
-		debugPrintflen(recvBuf, wifiMsgLen);
+		debugPrintf(recvBuf);
+		//debugPrintflen(recvBuf, wifiMsgLen);
+		//debugPrintf(" getFirmware s=>");
+		//debugPrintflen(recvBuf, wifiMsgLen);
 
 		if(dstartAddr == -1){
 			pPtr = data;
@@ -478,6 +480,7 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 			debugPrintf(" getFirmware s=> flashing\r\n");
 
 			__disable_irq();
+			ret = Chip_IAP_PreSectorForReadWrite(0, 15);
 			ret = Chip_IAP_CopyRamToFlash(dstartAddr, (uint32_t*)data, blockLen);
 			__enable_irq();
 			itoa(ret, numToStr, 10);
@@ -488,6 +491,7 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 			dstartAddr = -1;
 		}
 	}
+	NVIC_SystemReset();
 	return;
 
 	debugPrintf(" getFirmware s=> wait for IPD \r\n");
