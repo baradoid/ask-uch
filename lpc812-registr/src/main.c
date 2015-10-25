@@ -45,7 +45,7 @@ void vUartTask ();
 #define UARTTMPBUF_FULL_BITNUM 1
 uint8_t errword;
 
-int main(void)
+__RAM_FUNC int main(void)
 {
 	//uint64_t cnt_15s=15000, cnt_1ms=0, cnt_10ms=0, cnt_100ms=0;
 	prvSetupHardware();
@@ -53,7 +53,7 @@ int main(void)
 	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT, 0, 17);
 	Chip_GPIO_SetPinState(LPC_GPIO_PORT, 0, 17, false);
 
-	SysTick_Config(SysTick_VALUE);
+	//SysTick_Config(SysTick_VALUE);
 
 	//while(SysTickCnt <2000) ;
 	/* Before using the ring buffers, initialize them using the ring
@@ -115,7 +115,7 @@ int main(void)
 	debugPrintf("wait for wifi state\r\n");
 	TCmd cmd;
 	while(1){
-		getNextWifiCmd(cmd, INFINITY);
+		getNextWifiCmd(&cmd, INFINITY);
 		if( cmd.type == wifi_gotip)
 			break;
 		if( cmd.type == wifi_discon){
@@ -164,8 +164,8 @@ int main(void)
 	//readLLL("OK\r\n");
 
 	//debugPrintf("AT+CWLAP=1\r\n");
-	wifiPrintf("AT+CWLAP\r\n");
-	waitForRespOK();
+	//wifiPrintf("AT+CWLAP\r\n");
+	//waitForRespOK();
 
 //	debugPrintf("Wait AT+CWLAP resp OK! \r\n");
 
@@ -193,12 +193,12 @@ int main(void)
 //extern int16_t msgLength;
 
 volatile uint64_t SysTickCnt = 0;
-extern "C" void SysTick_Handler(void)
+void SysTick_Handler(void)
 {
 	SysTickCnt++;
 }
 
-extern "C" void NMI_Handler(void)
+void NMI_Handler(void)
 {
 	debugPrintf("NMI_Handler\r\n");
     while(1)
@@ -206,7 +206,7 @@ extern "C" void NMI_Handler(void)
     }
 }
 
-extern "C" void HardFault_Handler(void)
+void HardFault_Handler(void)
 {
 	debugPrintf("HardFault_Handler\r\n");
     while(1)
@@ -214,7 +214,7 @@ extern "C" void HardFault_Handler(void)
     }
 }
 
-extern "C" void SVC_Handler(void)
+void SVC_Handler(void)
 {
 	debugPrintf("SVC_Handler\r\n");
     while(1)
@@ -222,7 +222,7 @@ extern "C" void SVC_Handler(void)
     }
 }
 
-extern "C" void PendSV_Handler(void)
+void PendSV_Handler(void)
 {
 	debugPrintf("PendSV_Handler\r\n");
     while(1)

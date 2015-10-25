@@ -1,6 +1,7 @@
 #include <string.h>
 #include "chip.h"
 #include "uartUtils.h"
+#include <cr_section_macros.h>
 
 extern uint64_t SysTickCnt;
 //#define DEBUGPRINTF
@@ -37,6 +38,24 @@ uint16_t recvWifiMsg(char *rcvbf)
 	return msgLen;
 }
 
+__RAM_FUNC uint16_t recvWifiMsgBlocking(char *rcvbf, uint16_t bufLen)
+{
+	int readBytes = 0;
+	uint8_t *p8 = (uint8_t *) rcvbf;
+
+	while ( (readBytes < bufLen) &&
+		   /*((Chip_UART_GetStatus(LPC_USART1) & UART_STAT_RXRDY) != 0) &&*/
+		   (*p8 != '\n') ) {
+		*p8 = (uint8_t) (LPC_USART1->RXDATA & 0x000001FF); // Chip_UART_ReadByte(LPC_USART1);
+		p8++;
+		readBytes++;
+	}
+	//uint16_t msgLen = getUartIrqMsgLength();
+	//memcpy(rcvbf, uart1Buffer, BUF_LEN);
+	//enableWiFiMsg();
+	return readBytes;
+}
+
 int16_t recvWifiMsgTO(char *rcvbf, int16_t to_msec)
 {
 	int16_t ret = 0;
@@ -61,12 +80,17 @@ int16_t recvWifiMsgTO(char *rcvbf, int16_t to_msec)
 
 int16_t waitWifiMsgAndStartRecv()
 {
+	//debugPrintf(" get 11\r\n ");
 	waitWiFiMsg();
+	//debugPrintf(" get 22\r\n ");
 	uint16_t msgLen = getUartIrqMsgLength();
+	//debugPrintf(" get 33\r\n ");
 #ifdef DEBUGPRINTF
 	debugPrintf(uart1Buffer);
 #endif
+	//debugPrintf(" get 44\r\n ");
 	enableWiFiMsg();
+	//debugPrintf(" get 55\r\n ");
 	return msgLen;
 }
 
@@ -98,7 +122,7 @@ void enableWiFiMsg()
 	Chip_UART_IntEnable(LPC_USART1, UART_INTEN_RXRDY);
 }
 
-void uartPrintf(LPC_USART_T *pUART, const char *str)
+__RAM_FUNC void uartPrintf(LPC_USART_T *pUART, const char *str)
 {
 	Chip_UART_SendBlocking(pUART, str, strlen(str));
 }
@@ -106,6 +130,18 @@ void uartPrintf(LPC_USART_T *pUART, const char *str)
 void uartSimplePrintf(const char *str)
 {
 	Chip_UART_SendBlocking(LPC_USART0, str, strlen(str));
+}
+
+/* Transmit a byte array through the UART peripheral (blocking) */
+__RAM_FUNC void Chip_UART_SendBlockingString(LPC_USART_T *pUART, const char *data)
+{
+	char *p8 = (char *) data;
+
+	while (*p8 != '\0') {
+		while ((Chip_UART_GetStatus(pUART) & UART_STAT_TXRDY) == 0);
+		Chip_UART_SendByte(pUART, *p8);
+		p8 ++;
+	}
 }
 
 //void readUUU(const char *strToWa,  int16_t to_msec)
@@ -158,7 +194,7 @@ void uartSimplePrintf(const char *str)
 uint16_t uart1MsgLen = 0;
 char uart1Buffer[BUF_LEN];
 
-extern "C" void UART1_IRQHandler( void )
+void UART1_IRQHandler( void )
 {
 	static uint16_t recvBufCurInd = 0;
 
@@ -182,3 +218,10 @@ extern "C" void UART1_IRQHandler( void )
 	}
 
 }
+
+uint16_t getUartIrqMsgLength()
+{
+	//extern uint16_t uart1MsgLen;
+	return uart1MsgLen;
+}
+

@@ -41,17 +41,10 @@ endif
 all: lpc812-registr.axf
 
 # Tool invocations
-lpc812-registr.axf: $(OBJS) $(USER_OBJS)
-	@echo 'Building target: $@'
-	@echo 'Invoking: MCU C++ Linker'
-	arm-none-eabi-c++ -nostdlib -L"D:\dev\ask\lpc812-workspace\lpc_chip_8xx\Debug" -Xlinker -Map="lpc812-registr.map" -Xlinker --gc-sections -mcpu=cortex-m0plus -mthumb -T "lpc812-registr_Debug.ld" -o "lpc812-registr.axf" $(OBJS) $(USER_OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
-	@echo ' '
-	$(MAKE) --no-print-directory post-build
-
+	@echo 'No tool found that can build the extension specified with the build artifact name $@'
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) lpc812-registr.axf
+	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(CXX_DEPS)$(C_UPPER_DEPS) lpc812-registr.axf
 	-@echo ' '
 
 post-build:

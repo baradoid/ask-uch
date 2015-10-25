@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -llpc_chip_8xx
+LIBS :=
 

@@ -30,6 +30,7 @@
  */
 
 #include "chip.h"
+#include <cr_section_macros.h>
 
 /*****************************************************************************
  * Private types/enumerations/variables
@@ -46,9 +47,26 @@
 /*****************************************************************************
  * Public functions
  ****************************************************************************/
+ __RAM_FUNC void iap_entry(unsigned int cmd_param[], unsigned int status_result[])
+{
+	((IAP_ENTRY_T) IAP_ENTRY_LOCATION)(cmd_param, status_result);
+}
 
+
+ __RAM_FUNC uint8_t Chip_IAP_EraseSectorExt(uint32_t strSector, uint32_t endSector, uint32_t SystemCoreClock1000)
+ {
+ 	uint32_t command[5], result[5];
+
+ 	command[0] = IAP_ERSSECTOR_CMD;
+ 	command[1] = strSector;
+ 	command[2] = endSector;
+ 	command[3] = SystemCoreClock1000;
+ 	iap_entry((unsigned int*)command, (unsigned int*)result);
+
+ 	return result[0];
+ }
 /* Prepare sector for write operation */
-uint8_t Chip_IAP_PreSectorForReadWrite(uint32_t strSector, uint32_t endSector)
+__RAM_FUNC uint8_t Chip_IAP_PreSectorForReadWrite(uint32_t strSector, uint32_t endSector)
 {
 	uint32_t command[5], result[5];
 
@@ -76,7 +94,7 @@ uint8_t Chip_IAP_CopyRamToFlash(uint32_t dstAdd, uint32_t *srcAdd, uint32_t byte
 }
 
 /* Erase sector */
-uint8_t Chip_IAP_EraseSector(uint32_t strSector, uint32_t endSector)
+__RAM_FUNC uint8_t Chip_IAP_EraseSector(uint32_t strSector, uint32_t endSector)
 {
 	uint32_t command[5], result[5];
 

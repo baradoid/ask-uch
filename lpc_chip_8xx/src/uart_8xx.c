@@ -30,7 +30,7 @@
  */
 
 #include "chip.h"
-
+#include <cr_section_macros.h>
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
@@ -89,7 +89,7 @@ void Chip_UART_DeInit(LPC_USART_T *pUART)
 }
 
 /* Transmit a byte array through the UART peripheral (non-blocking) */
-int Chip_UART_Send(LPC_USART_T *pUART, const void *data, int numBytes)
+__RAM_FUNC int Chip_UART_Send(LPC_USART_T *pUART, const void *data, int numBytes)
 {
 	int sent = 0;
 	uint8_t *p8 = (uint8_t *) data;
@@ -106,7 +106,7 @@ int Chip_UART_Send(LPC_USART_T *pUART, const void *data, int numBytes)
 }
 
 /* Transmit a byte array through the UART peripheral (blocking) */
-int Chip_UART_SendBlocking(LPC_USART_T *pUART, const void *data, int numBytes)
+__RAM_FUNC int Chip_UART_SendBlocking(LPC_USART_T *pUART, const void *data, int numBytes)
 {
 	int pass, sent = 0;
 	uint8_t *p8 = (uint8_t *) data;

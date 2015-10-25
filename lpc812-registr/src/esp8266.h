@@ -60,8 +60,8 @@ extern char APIP[20], STAPIP[20];
 //TCmdType blockWaitCmd();
 void blockWaitSendOK();
 
-void getNextWifiCmd(TCmd &cmd, int16_t to_msec);
-void getNextWifiCmdExtBuf(char recvBuf[], TCmd &cmd, int16_t to_msec);
+void getNextWifiCmd(TCmd *cmd, int16_t to_msec);
+void getNextWifiCmdExtBuf(char recvBuf[], TCmd *cmd, int16_t to_msec);
 
 void startSendWifiDataWithLen(uint16_t strLen, uint8_t connId, uint8_t segInd);
 void sendWifiData(char *str, uint8_t connId);
@@ -70,7 +70,7 @@ void sendCipClose(uint8_t id);
 
 void waitForRespOK();
 
-uint16_t parseIPD(char *str, uint8_t &curConnInd, int16_t *msgLen);
+uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen);
 
 uint16_t getWifiNextString(char recvBuf[]);
 

@@ -110,6 +110,7 @@ uint8_t Chip_IAP_CopyRamToFlash(uint32_t dstAdd, uint32_t *srcAdd, uint32_t byte
  * @note	The end sector must be greater than or equal to start sector number
  */
 uint8_t Chip_IAP_EraseSector(uint32_t strSector, uint32_t endSector);
+uint8_t Chip_IAP_EraseSectorExt(uint32_t strSector, uint32_t endSector, uint32_t SystemCoreClock1000);
 
 /**
  * @brief Blank check a sector or multiples sector of on-chip flash memory
