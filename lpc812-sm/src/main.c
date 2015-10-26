@@ -183,6 +183,20 @@ __RAM_FUNC int main(void)
 
 	debugPrintf("init ok\r\n");
 
+//	char dd1[] = "EC";
+//	char dd2[] = "BEAF";
+//
+//	uint8_t u8Parsed = parseInt8(dd1);
+//	uint16_t u16Parsed = parseInt16(dd2);
+//
+//	itoa(u8Parsed, numToStr, 16);
+//	debugPrintf(numToStr);
+//	debugPrintf("  ");
+//	itoa(u16Parsed, numToStr, 16);
+//	debugPrintf(numToStr);
+//	debugPrintf("\r\n");
+
+
 	while(1) {
 		vHttpServerTask ();
     }

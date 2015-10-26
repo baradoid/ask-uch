@@ -278,40 +278,6 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 }
 
 
-__RAM_FUNC uint16_t parseInt16(char *str)
-{
-	uint8_t i, shift = 0;
-	uint16_t  ret=0;
-	for(i=0; i<4; i++){
-
-		if( (str[i]>=0x30) && (str[i]<=0x39) )
-			shift = 0x30;
-		else if( (str[i]>=0x41) && (str[i]<=0x46) )
-			shift = 0x37;
-		else if( (str[i]>=0x61) && (str[i]<=0x66) )
-			shift = 0x57;
-
-		ret |= ((str[i] - shift)<<(i*4));
-	}
-	return ret;
-}
-
-__RAM_FUNC uint8_t parseInt8(char *str) //отладить
-{
-	uint8_t i, ret=0, shift = 0;
-	for(i=0; i<2; i++){
-
-		if( (str[i]>=0x30) && (str[i]<=0x39) )
-			shift = 0x30;
-		else if( (str[i]>=0x41) && (str[i]<=0x46) )
-			shift = 0x37;
-		else if( (str[i]>=0x61) && (str[i]<=0x66) )
-			shift = 0x57;
-
-		ret |= ((str[i] - shift)<<(i*4));
-	}
-	return ret;
-}
 
 __RAM_FUNC inline int8_t convertTwosCompl(int8_t a) {
   //if (a < 0)

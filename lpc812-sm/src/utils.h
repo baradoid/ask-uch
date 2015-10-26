@@ -12,3 +12,7 @@ void delayMs(uint16_t msec);
 #define INFINITY -1
 
 void setwifiBaudRate(uint32_t baudrate);
+
+uint16_t parseInt16(char *str);
+uint8_t parseInt8(char *str);
+uint8_t parseInt4(char ch);

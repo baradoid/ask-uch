@@ -686,3 +686,26 @@ void setwifiBaudRate(uint32_t baudrate)
 // return (0);                                                                            /* Function successful */
 //}
 
+__RAM_FUNC uint8_t parseInt4(char ch) //отладить
+{
+	uint8_t shift = 0;
+
+	if( (ch>=0x30) && (ch<=0x39) )
+		shift = 0x30;
+	else if( (ch>=0x41) && (ch<=0x46) )
+		shift = 0x37;
+	else if( (ch>=0x61) && (ch<=0x66) )
+		shift = 0x57;
+
+	return ch - shift;
+}
+
+__RAM_FUNC uint8_t parseInt8(char *str) //отладить
+{
+	return (parseInt4(str[0])<<4)|(parseInt4(str[1]));
+}
+
+__RAM_FUNC uint16_t parseInt16(char *str)
+{
+	return (parseInt8(str)<<8)|parseInt8(str+2);
+}
