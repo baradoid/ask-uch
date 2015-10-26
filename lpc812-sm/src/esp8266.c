@@ -639,7 +639,7 @@ uint16_t getWifiNextString(char recvBuf[])
 			if(memcmp(recvBuf, "+IPD", 4) == 0){
 				//debugPrintf(" getWifiNextString=> IPD detected. \r\n");
 
-				stringLen = parseIPD(recvBuf, curConnInd, &curPacketLenLeft);
+				stringLen = parseIPD(recvBuf, &curConnInd, &curPacketLenLeft);
 				//memcpy(recvBuf, msg, stringLen);
 				//debugPrintf(" getWifiNextString=> msg:");
 				//debugPrintf(recvBuf);
@@ -672,7 +672,7 @@ uint16_t getWifiNextString(char recvBuf[])
 				//debugPrintf(" getWifiNextString =>");
 				//debugPrintf(pBufTail);
 
-				wifiMsgLen = parseIPD(pBufTail, curConnInd, &curPacketLenLeft);
+				wifiMsgLen = parseIPD(pBufTail, &curConnInd, &curPacketLenLeft);
 				//memcpy(pBufTail, msg, wifiMsgLen);
 				//pBufTail[wifiMsgLen] = '\0';
 

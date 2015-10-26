@@ -277,27 +277,43 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 	//blockWaitRecvBytesReport(true);
 }
 
-uint16_t parseInt16(char *str)
+
+__RAM_FUNC uint16_t parseInt16(char *str)
 {
-	char cc[5];
-	cc[0] = str[0];
-	cc[1] = str[1];
-	cc[2] = str[2];
-	cc[3] = str[3];
-	cc[4] = 0;
-	return strtol(cc, NULL, 16);
+	uint8_t i, shift = 0;
+	uint16_t  ret=0;
+	for(i=0; i<4; i++){
+
+		if( (str[i]>=0x30) && (str[i]<=0x39) )
+			shift = 0x30;
+		else if( (str[i]>=0x41) && (str[i]<=0x46) )
+			shift = 0x37;
+		else if( (str[i]>=0x61) && (str[i]<=0x66) )
+			shift = 0x57;
+
+		ret |= ((str[i] - shift)<<(i*4));
+	}
+	return ret;
 }
 
-uint8_t parseInt8(char *str)
+__RAM_FUNC uint8_t parseInt8(char *str) //отладить
 {
-	char cc[3];
-	cc[0] = str[0];
-	cc[1] = str[1];
-	cc[2] = 0;
-	return strtol(cc, NULL, 16);
+	uint8_t i, ret=0, shift = 0;
+	for(i=0; i<2; i++){
+
+		if( (str[i]>=0x30) && (str[i]<=0x39) )
+			shift = 0x30;
+		else if( (str[i]>=0x41) && (str[i]<=0x46) )
+			shift = 0x37;
+		else if( (str[i]>=0x61) && (str[i]<=0x66) )
+			shift = 0x57;
+
+		ret |= ((str[i] - shift)<<(i*4));
+	}
+	return ret;
 }
 
-inline int8_t convertTwosCompl(int8_t a) {
+__RAM_FUNC inline int8_t convertTwosCompl(int8_t a) {
   //if (a < 0)
 //    a = ( ~-a|128 ) + 1;
 
@@ -310,7 +326,7 @@ inline int8_t convertTwosCompl(int8_t a) {
 #define ESA 3
 #define EOF 4
 
-uint8_t parseData(char *recvBuf, uint8_t data[], uint8_t *dLen, uint16_t *dAddr)
+__RAM_FUNC uint8_t parseData(char *recvBuf, uint8_t data[], uint8_t *dLen, uint16_t *dAddr)
 {
 	char numToStr[10];
 	if(recvBuf[0] != ':'){
@@ -322,18 +338,18 @@ uint8_t parseData(char *recvBuf, uint8_t data[], uint8_t *dLen, uint16_t *dAddr)
 	uint8_t dType=0, dCrc = 0;
 
 	char *parsePtr = &(recvBuf[1]);
-	dLen = parseInt8(parsePtr);
+	*dLen = parseInt8(parsePtr);
 	parsePtr+=2;
-	dAddr = parseInt16(parsePtr);
+	*dAddr = parseInt16(parsePtr);
 	parsePtr+=4;
 	dType = parseInt8(parsePtr);
 	parsePtr+=2;
 
 	debugPrintf("l");
-	itoa(dLen, numToStr, 16);
+	itoa(*dLen, numToStr, 16);
 	debugPrintf(numToStr);
 	debugPrintf(".a");
-	itoa(dAddr, numToStr, 16);
+	itoa(*dAddr, numToStr, 16);
 	debugPrintf(numToStr);
 	debugPrintf(".t");
 	itoa(dType, numToStr, 16);
@@ -341,13 +357,13 @@ uint8_t parseData(char *recvBuf, uint8_t data[], uint8_t *dLen, uint16_t *dAddr)
 	debugPrintf(" ");
 
 	uint8_t cc = 0;
-	cc+=dLen;
+	cc+=*dLen;
 	cc+=dType;
 	cc+=(*dAddr&0xff);
 	cc+=((*dAddr>>8)&0xff);
 
 	uint8_t i;
-	for(i=0;i<dLen;i++){
+	for(i=0;i<*dLen;i++){
 		data[i] = parseInt8(parsePtr);
 		cc += data[i];
 		parsePtr += 2;
@@ -463,7 +479,7 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 		}
 		uint8_t dLen;
 		uint16_t dAddr = 0;
-		ret = parseData(recvBuf, pPtr, dLen, dAddr);
+		ret = parseData(recvBuf, pPtr, &dLen, &dAddr);
 		if(ret == DATA){
 			if(dstartAddr == -1){
 				dstartAddr = dAddr;
@@ -504,7 +520,7 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 			if(pch != NULL){
 				debugPrintf(" getFirmware s=> IPD detected. \r\n");
 				//char *msg;
-				parseIPD(recvBuf, curConnInd, &curPacketLenLeft);
+				parseIPD(recvBuf, &curConnInd, &curPacketLenLeft);
 				debugPrintf(" getFirmware s=> msg:");
 				debugPrintf(recvBuf);
 				debugPrintf("\r\n");
@@ -570,7 +586,7 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 
 		}
 		else{
-			parseIPD(recvBuf, curConnInd, &curPacketLenLeft);
+			parseIPD(recvBuf, &curConnInd, &curPacketLenLeft);
 			debugPrintf(" getFirmware s=> msg:");
 			debugPrintf(recvBuf);
 			debugPrintf("\r\n");
@@ -588,7 +604,7 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 		debugPrintf("\r\n");
 		//char *msg;
 
-		parseIPD(recvBuf, curConnInd, &curPacketLenLeft);
+		parseIPD(recvBuf, &curConnInd, &curPacketLenLeft);
 
 		debugPrintf(" getFirmware s=> msg:");
 		debugPrintf(recvBuf);
