@@ -61,7 +61,7 @@ int16_t recvWifiMsgTO(char *rcvbf, int16_t to_msec)
 	int16_t ret = 0;
 	uint64_t startTicks = SysTickCnt;
 //	//waitWiFiMsg();
-	debugPrintf(" recvWifiMsgTO start wait\r\n ");
+	//debugPrintf(" recvWifiMsgTO start wait\r\n ");
 	while(1){
 		if(isWiFiMsgRecvd() == true){
 			ret = getUartIrqMsgLength();

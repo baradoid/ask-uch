@@ -78,11 +78,10 @@ __RODATA(text) char htmlPart2[] =
 
 #define addToHtml(a) strcat (bufStr, a)
 
-void prepareHtmlData(char *bufStr)
+void prepareHtmlData(uint8_t curConn)
 {
-
 	uint8_t i;
-	char numToStr[10];
+	char bufStr[500], numToStr[10];
 	strcpy(bufStr, " ");
 	//itoa(xTaskGetTickCount(), numToStr, 10);
 	//strcat (htmlBody,numToStr);
@@ -156,6 +155,7 @@ void prepareHtmlData(char *bufStr)
 //	"<input type=\"submit\" value=\"but text\">"
 
 	//ASSERT(strlen(&(bufStr[0])) < htmlBodyLen);
+	sendWifiDataToBuf(bufStr, curConn);
 
 }
 
@@ -683,11 +683,47 @@ __RAM_FUNC void getFirmware(TCmd *cmd, char *recvBuf)
 __RODATA(text) char statusText1[] = "Wifi AP status: ON with name \"ESP_9DACCD\" with ip ";
 __RODATA(text) char statusText2[] = "</br>Wifi client status: connected on \"TL-WR842ND\" with ip ";
 __RODATA(text) char statusText3[] = "</br></br>Uptime: ";
+void sendPageStart(uint8_t curConn)
+{
+	char htmlBody[100];
+
+	debugPrintf("sendWifiDataToBuf\r\n");
+	sendWifiDataToBuf(htmlPart1, curConn);
+	debugPrintf("sendWifiDataToBuf\r\n");
+	strcpy(htmlBody, statusText1);
+	strcat(htmlBody, APIP);
+	strcat(htmlBody, statusText2);
+	strcat(htmlBody, STAPIP);
+	strcat(htmlBody, statusText3);
+
+	char numToStr[10];
+	extern uint64_t SysTickCnt;
+	itoa(SysTickCnt/(24*3600*1000), numToStr, 10);
+	strcat(htmlBody, numToStr);
+	strcat(htmlBody, "d ");
+
+	itoa(SysTickCnt/(3600*1000), numToStr, 10);
+	strcat(htmlBody, numToStr);
+	strcat(htmlBody, "h ");
+
+	itoa(SysTickCnt/(60*1000), numToStr, 10);
+	strcat(htmlBody, numToStr);
+	strcat(htmlBody, "m ");
+
+	itoa(SysTickCnt/1000, numToStr, 10);
+	strcat(htmlBody, numToStr);
+	strcat(htmlBody, "s ");
+	sendWifiDataToBuf(htmlBody, curConn);
+
+	sendWifiDataToBuf(htmlPartStartSec2, curConn);
+
+}
+
 
 #define DEBUGPRINTF
 void vHttpServerTask ()
 {
-	char htmlBody[1004], recvBuf[BUF_LEN];
+	char recvBuf[BUF_LEN];
 
 	TCmd cmd;
 	getNextWifiCmdExtBuf(recvBuf, &cmd, INFINITY);
@@ -705,34 +741,7 @@ void vHttpServerTask ()
 			extern uint64_t SysTickCnt;
 			uint32_t startGenPage =  (uint32_t)SysTickCnt;
 
-			debugPrintf("sendWifiDataToBuf\r\n");
-			sendWifiDataToBuf(htmlPart1, cmd.curConnInd);
-			debugPrintf("sendWifiDataToBuf\r\n");
-			strcpy(htmlBody, statusText1);
-			strcat(htmlBody, APIP);
-			strcat(htmlBody, statusText2);
-			strcat(htmlBody, STAPIP);
-			strcat(htmlBody, statusText3);
-
-			char numToStr[10];
-			itoa(SysTickCnt/(24*3600*1000), numToStr, 10);
-			strcat(htmlBody, numToStr);
-			strcat(htmlBody, "d ");
-
-			itoa(SysTickCnt/(3600*1000), numToStr, 10);
-			strcat(htmlBody, numToStr);
-			strcat(htmlBody, "h ");
-
-			itoa(SysTickCnt/(60*1000), numToStr, 10);
-			strcat(htmlBody, numToStr);
-			strcat(htmlBody, "m ");
-
-			itoa(SysTickCnt/1000, numToStr, 10);
-			strcat(htmlBody, numToStr);
-			strcat(htmlBody, "s ");
-			sendWifiDataToBuf(htmlBody, cmd.curConnInd);
-
-			sendWifiDataToBuf(htmlPartStartSec2, cmd.curConnInd);
+			sendPageStart(cmd.curConnInd);
 
 			debugPrintf("!!! start send SVG!!!\r\n");
 			//uint32_t cntVals[12];int
@@ -752,9 +761,7 @@ void vHttpServerTask ()
 			debugPrintf("!!! htmlSend0 SEND_OK detected!!!\r\n");
 #endif
 
-			prepareHtmlData(htmlBody);
-
-			sendWifiDataToBuf(htmlBody, cmd.curConnInd);
+			prepareHtmlData(cmd.curConnInd);
 
 #ifdef DEBUGPRINTF
 			debugPrintf("!!! htmlBody SEND_OK detected!!!\r\n");
@@ -762,10 +769,10 @@ void vHttpServerTask ()
 
 			sendWifiDataToBuf("<center>Page generate in ", cmd.curConnInd);
 
-			itoa(SysTickCnt - startGenPage, htmlBody, 10);
+			itoa(SysTickCnt - startGenPage, recvBuf, 10);
 			//debugPrintf(htmlBody);
 			//debugPrintf(" for page generate\r\n");
-			sendWifiDataToBuf(htmlBody, cmd.curConnInd);
+			sendWifiDataToBuf(recvBuf, cmd.curConnInd);
 			sendWifiDataToBuf(" ms</center>", cmd.curConnInd);
 
 			sendWifiDataToBuf(htmlPart2, cmd.curConnInd);

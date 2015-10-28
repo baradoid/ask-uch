@@ -142,7 +142,7 @@ void getNextWifiCmd(TCmd *cmd, int16_t to_msec)
 	getNextWifiCmdExtBuf(recvBuf, cmd, to_msec);
 }
 
-#define DEBUGPRINTF
+//#define DEBUGPRINTF
 void getNextWifiCmdExtBuf(char *recvBuf, TCmd *cmd, int16_t to_msec)
 {
 	cmd->type = UNKNWON;
@@ -284,7 +284,7 @@ void getNextWifiCmdExtBuf(char *recvBuf, TCmd *cmd, int16_t to_msec)
 		}
 	}
 }
-#undef DEBUGPRINTF
+//#undef DEBUGPRINTF
 
 //TCmdType blockWaitCmd()
 //{
@@ -446,10 +446,10 @@ void sendWifiData(char *str, uint8_t connId)
 	wifiPrintf(str);
 	blockWaitSendOK();
 }
-#define DEBUGPRINTF
+//#define DEBUGPRINTF
 void sendWifiDataToBuf(char *str, uint8_t connId)
 {
-	char numToStr[5];
+	char numToStr[10];
 	wifiPrintf("AT+CIPSENDBUF=");
 
 #ifdef DEBUGPRINTF
@@ -493,7 +493,7 @@ void sendWifiDataToBuf(char *str, uint8_t connId)
 	//blockWaitSendOK();
 	blockWaitRecvBytesReport();
 }
-#undef DEBUGPRINTF
+//#undef DEBUGPRINTF
 
 void startSendWifiDataWithLen(uint16_t strLen, uint8_t connId, uint8_t segInd)
 {
