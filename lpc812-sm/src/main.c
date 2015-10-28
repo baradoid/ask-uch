@@ -30,9 +30,6 @@
 
 #define SysTick_VALUE (SystemCoreClock/1000 - 1)
 
-
-void prvSetupHardware();
-
 //#define UART_RB_SIZE 128
 /* Transmit and receive ring buffers */
 //RINGBUFF_T rxring;
@@ -119,10 +116,10 @@ __RAM_FUNC int main(void)
 		if( cmd.type == wifi_gotip)
 			break;
 		if( cmd.type == wifi_discon){
-			//debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
-			//wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
-			debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
-			wifiPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+			debugPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
+			wifiPrintf("AT+CWJAP_CUR=\"YOTA\",\"kkkknnnn\"\r\n");
+			//debugPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
+			//wifiPrintf("AT+CWJAP_DEF=\"TL-WR842ND\",\"kkkknnnn\"\r\n");
 			waitForRespOK();
 			break;
 		}

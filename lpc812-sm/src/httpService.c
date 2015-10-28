@@ -705,7 +705,9 @@ void vHttpServerTask ()
 			extern uint64_t SysTickCnt;
 			uint32_t startGenPage =  (uint32_t)SysTickCnt;
 
+			debugPrintf("sendWifiDataToBuf\r\n");
 			sendWifiDataToBuf(htmlPart1, cmd.curConnInd);
+			debugPrintf("sendWifiDataToBuf\r\n");
 			strcpy(htmlBody, statusText1);
 			strcat(htmlBody, APIP);
 			strcat(htmlBody, statusText2);
