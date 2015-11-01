@@ -193,7 +193,6 @@ __RAM_FUNC int main(void)
 //	debugPrintf(numToStr);
 //	debugPrintf("\r\n");
 
-
 	while(1) {
 		vHttpServerTask ();
     }

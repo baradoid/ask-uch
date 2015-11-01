@@ -3,6 +3,7 @@
 #include "uartUtils.h"
 #include "utils.h"
 #include "httpService.h"
+#include <cr_section_macros.h>
 
 //#define DEBUGPRINTF
 
@@ -77,7 +78,8 @@ uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 	uint8_t i;
 	char *pch, *msg, key[] = ",:";
 	uint16_t tailLen = 0;
-	//debugPrintf("parseIPD ");
+	debugPrintf("parseIPD \r\n");
+	debugPrintf(str);
 	pch = strpbrk (str, key);
 	for(i=0; (pch != NULL)||(i<4); i++){
 		pch++;
@@ -86,9 +88,9 @@ uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 		}
 		else if(i == 1){
 			*msgLen = atoi(pch);
-			/*debugPrintf("msg length:");
+			/**/debugPrintf("msg length:");
 			debugPrintf(pch);
-			debugPrintf("  ");*/
+			debugPrintf("  ");
 			//debugPrintf("\r\n");
 
 			//debugPrintf(pch);
@@ -118,6 +120,8 @@ uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 
 	*msgLen -= tailLen;
 
+	debugPrintf("\r\n");
+
 	/*char numToStr[10];
 	//debugPrintf("parseIPD ");
 	debugPrintf("conNum ");
@@ -132,7 +136,6 @@ uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 	debugPrintf(numToStr);
 	debugPrintf(" chars already recvd\r\n");*/
 	return tailLen;
-
 }
 
 
@@ -618,28 +621,28 @@ void waitForCIPSENDResp()
 }
 
 
-uint16_t getWifiNextString(char recvBuf[])
+__RAM_FUNC uint16_t getWifiNextString(char recvBuf[])
 {
 	static int16_t curPacketLenLeft = 0;
-	char numToStr[10] /*, *msg*/;
+	/*char numToStr[10] , *msg*/;
 	uint8_t curConnInd;
 	int16_t stringLen = 0;
 	int16_t wifiMsgLen = 0;
 
 	wifiMsgLen = recvWifiMsgBlocking(recvBuf, BUF_LEN);
-	//debugPrintf(" getWifiNextString ");
-	//itoa(curPacketLenLeft, numToStr, 10);
-	//debugPrintf(numToStr);
-	//debugPrintf(" => ");
-	//debugPrintflen(recvBuf, wifiMsgLen);
+	/*debugPrintf(" getWifiNextString ");
+	itoa(curPacketLenLeft, numToStr, 10);
+	debugPrintf(numToStr);
+	debugPrintf(" => ");
+	debugPrintflen(recvBuf, wifiMsgLen);
 	//debugPrintf(" getWifiNextString=>");
 
-	//debugPrintf("\r\n");
+	debugPrintf("\r\n");*/
 
 	if(curPacketLenLeft == 0){
 		if(recvBuf[0] == '+'){
 			if(memcmp(recvBuf, "+IPD", 4) == 0){
-				//debugPrintf(" getWifiNextString=> IPD detected. \r\n");
+				debugPrintf(" getWifiNextString=> IPD detected. \r\n");
 
 				stringLen = parseIPD(recvBuf, &curConnInd, &curPacketLenLeft);
 				//memcpy(recvBuf, msg, stringLen);

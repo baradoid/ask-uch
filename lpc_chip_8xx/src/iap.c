@@ -94,7 +94,7 @@ uint8_t Chip_IAP_CopyRamToFlash(uint32_t dstAdd, uint32_t *srcAdd, uint32_t byte
 }
 
 /* Erase sector */
-__RAM_FUNC uint8_t Chip_IAP_EraseSector(uint32_t strSector, uint32_t endSector)
+uint8_t Chip_IAP_EraseSector(uint32_t strSector, uint32_t endSector)
 {
 	uint32_t command[5], result[5];
 

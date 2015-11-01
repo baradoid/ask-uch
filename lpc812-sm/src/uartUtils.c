@@ -41,15 +41,19 @@ uint16_t recvWifiMsg(char *rcvbf)
 __RAM_FUNC uint16_t recvWifiMsgBlocking(char *rcvbf, uint16_t bufLen)
 {
 	int readBytes = 0;
-	uint8_t *p8 = (uint8_t *) rcvbf;
+	//uint8_t *p8 = (uint8_t *) rcvbf;
 
-	while ( (readBytes < bufLen) &&
-		   /*((Chip_UART_GetStatus(LPC_USART1) & UART_STAT_RXRDY) != 0) &&*/
-		   (*p8 != '\n') ) {
-		*p8 = (uint8_t) (LPC_USART1->RXDATA & 0x000001FF); // Chip_UART_ReadByte(LPC_USART1);
-		p8++;
+	while ( readBytes < bufLen) {
+
+		while((Chip_UART_GetStatus(LPC_USART1) & UART_STAT_RXRDY) == 0) ;
+
+		*rcvbf = (uint8_t) (LPC_USART1->RXDATA & 0x000001FF); // Chip_UART_ReadByte(LPC_USART1);
 		readBytes++;
+		if(*rcvbf == '\n')
+			break;
+		rcvbf++;
 	}
+	*(rcvbf+1) = '\0';
 	//uint16_t msgLen = getUartIrqMsgLength();
 	//memcpy(rcvbf, uart1Buffer, BUF_LEN);
 	//enableWiFiMsg();

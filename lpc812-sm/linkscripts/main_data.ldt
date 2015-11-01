@@ -1,0 +1,12 @@
+*memcpy.o(.text*)
+*memcpy.o(.rodata .rodata.* .constdata .constdata.*)
+*memcmp.o(.text*)
+*memcmp.o(.rodata .rodata.* .constdata .constdata.*)
+*memset.o(.text*)
+*memset.o(.rodata .rodata.* .constdata .constdata.*)
+*division_32.o(.text*)
+*division_32.o(.rodata .rodata.* .constdata .constdata.*)
+*division_idiv0.o(.text*)
+*division_idiv0.o(.rodata .rodata.* .constdata .constdata.*)
+. = ALIGN(${text_align});
+*(.data*)
