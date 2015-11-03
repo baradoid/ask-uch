@@ -73,13 +73,18 @@ void scanWiFiAp()
 	waitForRespOK();
 }
 
-uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
+__RODATA(text) static char msgParseIPD[] = "parseIPD \r\n";
+__RODATA(text) static char msgMsgLen[] = "msg length:";
+__RODATA(text) static char msgMsgSpace[] = "  ";
+__RODATA(text) static char msgRN[] = "\r\n";
+
+__RAM_FUNC uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 {
 	uint8_t i;
 	char *pch, *msg, key[] = ",:";
 	uint16_t tailLen = 0;
-	debugPrintf("parseIPD \r\n");
-	debugPrintf(str);
+	//debugPrintf(msgParseIPD);
+	//debugPrintf(str);
 	pch = strpbrk (str, key);
 	for(i=0; (pch != NULL)||(i<4); i++){
 		pch++;
@@ -87,10 +92,15 @@ uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 			*curConnInd = (uint8_t)atoi(pch);
 		}
 		else if(i == 1){
+			char numToStr[10];
 			*msgLen = atoi(pch);
-			/**/debugPrintf("msg length:");
+			/*debugPrintf(msgMsgLen);
+			debugPrintf(msgMsgSpace);
+			itoa(tailLen, numToStr, 10);
+			debugPrintf(numToStr);
+			debugPrintf(msgMsgSpace);
 			debugPrintf(pch);
-			debugPrintf("  ");
+			debugPrintf(msgMsgSpace);*/
 			//debugPrintf("\r\n");
 
 			//debugPrintf(pch);
@@ -120,7 +130,7 @@ uint16_t parseIPD(char *str, uint8_t *curConnInd, int16_t *msgLen)
 
 	*msgLen -= tailLen;
 
-	debugPrintf("\r\n");
+	//debugPrintf(msgRN);
 
 	/*char numToStr[10];
 	//debugPrintf("parseIPD ");
@@ -620,35 +630,38 @@ void waitForCIPSENDResp()
 	}
 }
 
+__RODATA(text) static char msgGetNextStr[] = " getWifiNextString=> IPD detected. \r\n";
+__RODATA(text) static char msgIPD[] = "+IPD";
+__RODATA(text) static char msgGetNextStrDet[] = " getWifiNextString \\r\\n detected \r\n";
 
-__RAM_FUNC uint16_t getWifiNextString(char recvBuf[])
+__RAM_FUNC uint16_t getWifiNextString(char recvBuf[], int16_t *curPacketLenLeft)
 {
-	static int16_t curPacketLenLeft = 0;
-	/*char numToStr[10] , *msg*/;
+	char numToStr[10] /*, *msg*/;
 	uint8_t curConnInd;
 	int16_t stringLen = 0;
 	int16_t wifiMsgLen = 0;
 
+
 	wifiMsgLen = recvWifiMsgBlocking(recvBuf, BUF_LEN);
-	/*debugPrintf(" getWifiNextString ");
-	itoa(curPacketLenLeft, numToStr, 10);
+
+	/*debugPrintf(" getWifiNextString=>");
+	itoa(*curPacketLenLeft, numToStr, 10);
 	debugPrintf(numToStr);
 	debugPrintf(" => ");
 	debugPrintflen(recvBuf, wifiMsgLen);
-	//debugPrintf(" getWifiNextString=>");
 
 	debugPrintf("\r\n");*/
 
-	if(curPacketLenLeft == 0){
+	if(*curPacketLenLeft == 0){
 		if(recvBuf[0] == '+'){
-			if(memcmp(recvBuf, "+IPD", 4) == 0){
-				debugPrintf(" getWifiNextString=> IPD detected. \r\n");
+			if(memcmp(recvBuf, msgIPD, 4) == 0){
+				debugPrintf(msgGetNextStr);
 
-				stringLen = parseIPD(recvBuf, &curConnInd, &curPacketLenLeft);
+				stringLen = parseIPD(recvBuf, &curConnInd, curPacketLenLeft);
 				//memcpy(recvBuf, msg, stringLen);
-				//debugPrintf(" getWifiNextString=> msg:");
-				//debugPrintf(recvBuf);
-				//debugPrintf("\r\n");
+				/*debugPrintf(" getWifiNextString=> msg:");
+				debugPrintf(recvBuf);
+				debugPrintf("\r\n");*/
 			}
 		}
 		else{
@@ -658,26 +671,26 @@ __RAM_FUNC uint16_t getWifiNextString(char recvBuf[])
 		//debugPrintflen(recvBuf, wifiMsgLen);
 	}
 	else{
-		if(wifiMsgLen > curPacketLenLeft){
+		if(wifiMsgLen > *curPacketLenLeft){
 			wifiMsgLen -=2;
 			//curPacketLenLeft -= wifiMsgLen;
 			//debugPrintf(" getWifiNextString end detected\r\n");
-			if(memcmp(&(recvBuf[curPacketLenLeft-1]),"\r\n",2) == 0){
-				stringLen = curPacketLenLeft;
-				curPacketLenLeft = 0;
-				debugPrintf(" getWifiNextString \\r\\n detected \r\n");
+			if(memcmp(&(recvBuf[*curPacketLenLeft-1]), msgRN, 2) == 0){
+				stringLen = *curPacketLenLeft;
+				*curPacketLenLeft = 0;
+				debugPrintf(msgGetNextStrDet);
 			}
 			else{
 				//debugPrintf(" getWifiNextString add next string \r\n");
-				char *pBufTail = &(recvBuf[curPacketLenLeft]);
+				char *pBufTail = &(recvBuf[*curPacketLenLeft]);
 				wifiMsgLen = recvWifiMsgBlocking(pBufTail, BUF_LEN);
 
-				stringLen = curPacketLenLeft;
+				stringLen = *curPacketLenLeft;
 
 				//debugPrintf(" getWifiNextString =>");
 				//debugPrintf(pBufTail);
 
-				wifiMsgLen = parseIPD(pBufTail, &curConnInd, &curPacketLenLeft);
+				wifiMsgLen = parseIPD(pBufTail, &curConnInd, curPacketLenLeft);
 				//memcpy(pBufTail, msg, wifiMsgLen);
 				//pBufTail[wifiMsgLen] = '\0';
 
@@ -691,7 +704,7 @@ __RAM_FUNC uint16_t getWifiNextString(char recvBuf[])
 
 		}
 		else{
-			curPacketLenLeft -= wifiMsgLen;
+			*curPacketLenLeft -= wifiMsgLen;
 			stringLen = wifiMsgLen;
 		}
 
@@ -700,3 +713,8 @@ __RAM_FUNC uint16_t getWifiNextString(char recvBuf[])
 	return stringLen;
 }
 
+void resetEspModule()
+{
+	wifiPrintf("AT+RST\r\n");
+	waitForRespOK();
+}

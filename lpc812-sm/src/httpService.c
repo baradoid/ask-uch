@@ -74,6 +74,17 @@ __RODATA(text) char htmlPart2[] =
 	"</body>"
 	"</html>\r\n";
 
+__RODATA(text) char htmlPart3[] = "<p>PSK Password: <input type=\"text\" name=\"pswd\" /></p>"
+"<p><input type=\"submit\" name=\"submit\" value=\"submit\">"
+"   <input type=\"submit\" name=\"submit\" value=\"update\"></p>"
+"</form>"
+"<form enctype=\"multipart/form-data\" method=\"post\">"
+"<p>Select files</p>"
+"<p><input type=\"file\" name=\"firmware\" accept=\".hex\">"
+"<input type=\"submit\" value=\"Upload\"></p>"
+"</form>"
+//addToHtml("<form  method=\"get\"><input type=\"submit\" value=\"update\"></form>");
+"</section></div>";
 
 
 #define addToHtml(a) strcat (bufStr, a)
@@ -81,7 +92,7 @@ __RODATA(text) char htmlPart2[] =
 void prepareHtmlData(uint8_t curConn)
 {
 	uint8_t i;
-	char bufStr[500], numToStr[10];
+	char bufStr[250], numToStr[10];
 	strcpy(bufStr, " ");
 	//itoa(xTaskGetTickCount(), numToStr, 10);
 	//strcat (htmlBody,numToStr);
@@ -94,54 +105,59 @@ void prepareHtmlData(uint8_t curConn)
 	addToHtml("<form method=\"get\">");
 
 	addToHtml("<table>");
-	for(i=0;i<WIFI_APLISTMAX;i++){
-		if(wifiApList[i].rssi != 0){
-
-			addToHtml("<tr><td>");
-
-			addToHtml("<input name=\"wifiAp\" type=\"radio\" value= ");
-			addToHtml(wifiApList[i].name);
-			addToHtml( "> ");
-			addToHtml(wifiApList[i].name);
-
-
-
-			addToHtml("</td><td>");
-			uint8_t progressValue = 100 - abs(wifiApList[i].rssi);
-			itoa(progressValue, numToStr, 10);
-
-			addToHtml("        <progress value=\"");
-			addToHtml(numToStr);
-			addToHtml("\" max=\"100\">");
-			//addToHtml("<br>");
-			//addToHtml( " ");
-			itoa(wifiApList[i].rssi, numToStr, 10);
-			addToHtml(numToStr);
-			addToHtml( "dB</progress> ");
-			addToHtml(numToStr);
-			addToHtml( "dB");
-
-			addToHtml("</td></tr>");
-			//	"<input name=\"mycolor\" type=\"radio\" value=\"white\"> white <br>"
-
-
-		}
-	}
+//	for(i=0;i<WIFI_APLISTMAX;i++){
+//		if(wifiApList[i].rssi != 0){
+//
+//			addToHtml("<tr><td>");
+//
+//			addToHtml("<input name=\"wifiAp\" type=\"radio\" value= ");
+//			addToHtml(wifiApList[i].name);
+//			addToHtml( "> ");
+//			addToHtml(wifiApList[i].name);
+//
+//
+//
+//			addToHtml("</td><td>");
+//			uint8_t progressValue = 100 - abs(wifiApList[i].rssi);
+//			itoa(progressValue, numToStr, 10);
+//
+//			addToHtml("        <progress value=\"");
+//			addToHtml(numToStr);
+//			addToHtml("\" max=\"100\">");
+//			//addToHtml("<br>");
+//			//addToHtml( " ");
+//			itoa(wifiApList[i].rssi, numToStr, 10);
+//			addToHtml(numToStr);
+//			addToHtml( "dB</progress> ");
+//			addToHtml(numToStr);
+//			addToHtml( "dB");
+//
+//			addToHtml("</td></tr>");
+//			//	"<input name=\"mycolor\" type=\"radio\" value=\"white\"> white <br>"
+//
+//
+//		}
+//	}
 	addToHtml("</table>");
 
-	addToHtml("<p>PSK Password: <input type=\"text\" name=\"pswd\" /></p>");
-	addToHtml("<p><input type=\"submit\" name=\"submit\" value=\"submit\">");
-	addToHtml("   <input type=\"submit\" name=\"submit\" value=\"update\"></p>");
-	addToHtml("</form>");
+	sendWifiDataToBuf(bufStr, curConn);
 
-	addToHtml("<form enctype=\"multipart/form-data\" method=\"post\">");
-	addToHtml("<p>Select files</p>");
-	addToHtml("<p><input type=\"file\" name=\"firmware\" accept=\".hex\">");
-	addToHtml("<input type=\"submit\" value=\"Upload\"></p>");
-	addToHtml("</form>");
+	//debugPrintf("prepareHtmlData st2 \r\n");
 
-	//addToHtml("<form  method=\"get\"><input type=\"submit\" value=\"update\"></form>");
-	addToHtml("</section></div>");
+//	strcpy(bufStr, "<p>PSK Password: <input type=\"text\" name=\"pswd\" /></p>");
+//	//addToHtml("<p>PSK Password: <input type=\"text\" name=\"pswd\" /></p>");
+//	addToHtml("<p><input type=\"submit\" name=\"submit\" value=\"submit\">");
+//	addToHtml("   <input type=\"submit\" name=\"submit\" value=\"update\"></p>");
+//	addToHtml("</form>");
+//
+//	addToHtml("<form enctype=\"multipart/form-data\" method=\"post\">");
+//	addToHtml("<p>Select files</p>");
+//	addToHtml("<p><input type=\"file\" name=\"firmware\" accept=\".hex\">");
+//	addToHtml("<input type=\"submit\" value=\"Upload\"></p>");
+//	addToHtml("</form>");
+//
+//	//addToHtml("<form  method=\"get\"><input type=\"submit\" value=\"update\"></form>");
+//	addToHtml("</section></div>");
 
 
 //	"<select name=\"securType\" size = 1> "
@@ -155,8 +171,7 @@ void prepareHtmlData(uint8_t curConn)
 //	"<input type=\"submit\" value=\"but text\">"
 
 	//ASSERT(strlen(&(bufStr[0])) < htmlBodyLen);
-	sendWifiDataToBuf(bufStr, curConn);
-
+	sendWifiDataToBuf(htmlPart3, curConn);
 }
 
 
@@ -277,26 +292,12 @@ void sendSvgData(char *bufStr, uint8_t curConnInd/*, uint32_t *vals*/)
 	//blockWaitRecvBytesReport(true);
 }
 
-
-
-__RAM_FUNC inline int8_t convertTwosCompl(int8_t a) {
-  //if (a < 0)
-//    a = ( ~-a|128 ) + 1;
-
-  return ~a + 1;
-}
-
-
-
-
-
-
 __RODATA(text) char statusText1[] = "Wifi AP status: ON with name \"ESP_9DACCD\" with ip ";
 __RODATA(text) char statusText2[] = "</br>Wifi client status: connected on \"TL-WR842ND\" with ip ";
 __RODATA(text) char statusText3[] = "</br></br>Uptime: ";
 void sendPageStart(uint8_t curConn)
 {
-	char htmlBody[500];
+	char htmlBody[250];
 
 	debugPrintf("sendWifiDataToBuf\r\n");
 	sendWifiDataToBuf(htmlPart1, curConn);

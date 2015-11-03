@@ -1,1 +1,1 @@
-*(EXCLUDE_FILE(*memcpy.o *memcmp.o *memset.o *division_32.o *division_idiv0.o) .text*)
+*(EXCLUDE_FILE(*memcpy.o *memcmp.o *memset.o *division_32.o *division_idiv0.o *strpbrk.o *scanf.o) .text*)

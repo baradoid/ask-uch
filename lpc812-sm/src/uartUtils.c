@@ -3,7 +3,7 @@
 #include "uartUtils.h"
 #include <cr_section_macros.h>
 
-extern uint64_t SysTickCnt;
+extern volatile uint64_t SysTickCnt;
 //#define DEBUGPRINTF
 
 bool isWiFiMsgRecvd()

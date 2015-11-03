@@ -8,5 +8,9 @@
 *division_32.o(.rodata .rodata.* .constdata .constdata.*)
 *division_idiv0.o(.text*)
 *division_idiv0.o(.rodata .rodata.* .constdata .constdata.*)
+*strpbrk.o(.text*)
+*strpbrk.o(.rodata .rodata.* .constdata .constdata.*)
+*scanf.o(.text*)
+*scanf.o(.rodata .rodata.* .constdata .constdata.*)
 . = ALIGN(${text_align});
 *(.data*)

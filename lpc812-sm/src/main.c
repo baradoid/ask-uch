@@ -50,7 +50,7 @@ __RAM_FUNC int main(void)
 	Chip_GPIO_SetPinDIROutput(LPC_GPIO_PORT, 0, 17);
 	Chip_GPIO_SetPinState(LPC_GPIO_PORT, 0, 17, false);
 
-	//SysTick_Config(SysTick_VALUE);
+	SysTick_Config(SysTick_VALUE);
 
 	//while(SysTickCnt <2000) ;
 	/* Before using the ring buffers, initialize them using the ring
@@ -79,13 +79,21 @@ __RAM_FUNC int main(void)
 
 	//readUUU("ready\r\n");
 	while(1){
-		waitWiFiMsg();
-		//debugPrintf(" ->");
-		//debugPrintf(uart1Buffer);
-		if(strcmp(uart1Buffer, "ready\r\n") == 0){
-			break;
+		debugPrintf("wait esp ready ... ");
+		if(waitWiFiMsgTO(3000) == -1){
+			debugPrintf("TO");
+			resetEspModule();
 		}
-		enableWiFiMsg();
+		else{
+			//debugPrintf(" ->");
+			//debugPrintf(uart1Buffer);
+			if(strcmp(uart1Buffer, "ready\r\n") == 0){
+				break;
+			}
+
+			enableWiFiMsg();
+		}
+		debugPrintf("\r\n");
 	}
 
 	debugPrintf("ready detected\r\n");
