@@ -407,7 +407,7 @@ void vHttpServerTask ()
 		}
 		else if(cmd.htmlReqType == POST){
 			debugPrintf("httpTask-> !!! POST !!!\r\n");
-			getFirmware(&cmd);
+			getFirmware();
 		}
 		else{
 			debugPrintf("httpTask-> not ROOT. send 404\r\n");

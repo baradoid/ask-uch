@@ -63,12 +63,14 @@ __RAM_FUNC int main(void)
 	debugPrintf("starting main\r\n");
 
 
-	debugPrintf("core clock ");
-	char numToStr[15];
-	itoa(SystemCoreClock, &(numToStr[0]), 10);
-	debugPrintf("core clock ");
-	debugPrintf(numToStr);
-	debugPrintf(" Hz\r\n");
+	{
+		debugPrintf("core clock ");
+		char numToStr[15];
+		itoa(SystemCoreClock, &(numToStr[0]), 10);
+		debugPrintf("core clock ");
+		debugPrintf(numToStr);
+		debugPrintf(" Hz\r\n");
+	}
 
 	/*debugPrintf("stack top 0x");
 	extern void _vStackTop;

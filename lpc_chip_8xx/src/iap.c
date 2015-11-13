@@ -65,6 +65,22 @@
 
  	return result[0];
  }
+
+ /* Copy RAM to flash */
+ __RAM_FUNC uint8_t Chip_IAP_CopyRamToFlashExt(uint32_t dstAdd, uint32_t *srcAdd, uint32_t byteswrt, uint32_t SystemCoreClock1000)
+ {
+ 	uint32_t command[5], result[5];
+
+ 	command[0] = IAP_WRISECTOR_CMD;
+ 	command[1] = dstAdd;
+ 	command[2] = (uint32_t) srcAdd;
+ 	command[3] = byteswrt;
+ 	command[4] = SystemCoreClock1000;
+ 	iap_entry(command, result);
+
+ 	return result[0];
+ }
+
 /* Prepare sector for write operation */
 __RAM_FUNC uint8_t Chip_IAP_PreSectorForReadWrite(uint32_t strSector, uint32_t endSector)
 {
@@ -79,7 +95,7 @@ __RAM_FUNC uint8_t Chip_IAP_PreSectorForReadWrite(uint32_t strSector, uint32_t e
 }
 
 /* Copy RAM to flash */
-uint8_t Chip_IAP_CopyRamToFlash(uint32_t dstAdd, uint32_t *srcAdd, uint32_t byteswrt)
+__RAM_FUNC uint8_t Chip_IAP_CopyRamToFlash(uint32_t dstAdd, uint32_t *srcAdd, uint32_t byteswrt)
 {
 	uint32_t command[5], result[5];
 

@@ -101,6 +101,7 @@ uint8_t Chip_IAP_PreSectorForReadWrite(uint32_t strSector, uint32_t endSector);
  *			should be 256 | 512 | 1024 | 4096
  */
 uint8_t Chip_IAP_CopyRamToFlash(uint32_t dstAdd, uint32_t *srcAdd, uint32_t byteswrt);
+uint8_t Chip_IAP_CopyRamToFlashExt(uint32_t dstAdd, uint32_t *srcAdd, uint32_t byteswrt, uint32_t SystemCoreClock100);
 
 /**
  * @brief	Erase sector
